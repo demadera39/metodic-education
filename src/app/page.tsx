@@ -71,7 +71,7 @@ export default function HomePage() {
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
               Solve your meeting challenges.
               <br />
-              <span className="text-muted-foreground">For free.</span>
+              <span className="text-muted-foreground">Right now.</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8">
               Practical scripts, methods, and techniques to transform your workshops and meetings.

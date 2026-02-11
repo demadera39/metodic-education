@@ -5,139 +5,149 @@ import { Icon } from '@iconify/react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { supabase } from '@/lib/supabase';
 
-// This would come from Supabase in production
-// For now, using static data that matches your DB structure
-const challenges: Record<string, {
-  title: string;
+// Helper to render inline markdown (bold, italic, quotes)
+function renderInlineMarkdown(text: string): React.ReactNode {
+  if (!text) return null;
+
+  // Replace **text** with bold, *text* with italic, and clean up quotes
+  const parts: React.ReactNode[] = [];
+  let remaining = text.replace(/"/g, '"').replace(/"/g, '"').replace(/'/g, "'").replace(/'/g, "'");
+  let key = 0;
+
+  // Process bold (**text**)
+  while (remaining.includes('**')) {
+    const startIdx = remaining.indexOf('**');
+    const endIdx = remaining.indexOf('**', startIdx + 2);
+
+    if (endIdx === -1) break;
+
+    // Add text before bold
+    if (startIdx > 0) {
+      parts.push(remaining.substring(0, startIdx));
+    }
+
+    // Add bold text
+    const boldText = remaining.substring(startIdx + 2, endIdx);
+    parts.push(<strong key={key++}>{boldText}</strong>);
+
+    remaining = remaining.substring(endIdx + 2);
+  }
+
+  // Add any remaining text
+  if (remaining) {
+    parts.push(remaining);
+  }
+
+  return parts.length > 0 ? parts : text;
+}
+
+interface Challenge {
+  id: string;
   slug: string;
-  description: string;
+  title: string;
+  category: string;
+  description: string | null;
   symptoms: string[];
   causes: string[];
-  panic_script: string;
-  related_methods: { name: string; slug: string }[];
-  related_recipes: { title: string; slug: string; duration: number }[];
-}> = {
-  'silent-meetings': {
-    title: 'Silent Meetings',
-    slug: 'silent-meetings',
-    description: 'Your team sits quietly while you desperately try to spark discussion. The same 2-3 people speak while everyone else checks their phones.',
-    symptoms: [
-      'Only a few people ever contribute',
-      'Awkward silences after questions',
-      'People seem checked out or distracted',
-      'Decisions feel imposed, not collaborative',
-      'You hear feedback after the meeting, not during',
-    ],
-    causes: [
-      'Psychological safety issues - people fear judgment',
-      'Dominant voices intimidate quieter team members',
-      'No clear invitation to participate',
-      'Questions are too broad or abstract',
-      'Remote meetings amplify existing dynamics',
-    ],
-    panic_script: `**Right now, try this:**
+  panic_script: string | null;
+  keywords: string[];
+  solution_count: number;
+  is_published: boolean;
+}
 
-1. **Pause and acknowledge it**: "I notice we're pretty quiet. That's okay - let me try something different."
-
-2. **Use silent brainstorming**: "Take 2 minutes to write down your thoughts on sticky notes (or in chat). No need to share out loud yet."
-
-3. **Round-robin with permission to pass**: "Let's go around. Share one thought, or say 'pass' - both are fine."
-
-4. **Smaller groups**: "Break into pairs for 3 minutes, then we'll reconvene."
-
-**After the meeting**: Consider if your meeting actually needs to be a meeting, or if async input would work better.`,
-    related_methods: [
-      { name: '1-2-4-All', slug: '1-2-4-all' },
-      { name: 'Brainwriting', slug: 'brainwriting' },
-      { name: 'Round Robin', slug: 'round-robin' },
-      { name: 'Think-Pair-Share', slug: 'think-pair-share' },
-    ],
-    related_recipes: [
-      { title: 'Inclusive Brainstorm Session', slug: 'inclusive-brainstorm', duration: 60 },
-      { title: 'Team Feedback Workshop', slug: 'team-feedback', duration: 90 },
-    ],
-  },
-  'decision-deadlock': {
-    title: 'Decision Deadlock',
-    slug: 'decision-deadlock',
-    description: 'Your team keeps discussing the same issue without reaching a decision. Meetings end with "let\'s think about it more" and nothing changes.',
-    symptoms: [
-      'The same topics come up meeting after meeting',
-      'Analysis paralysis - endless data requests',
-      'Decisions get made but then reopened',
-      'Nobody wants to make the final call',
-      'Stakeholders keep adding new considerations',
-    ],
-    causes: [
-      'Unclear decision rights (who actually decides?)',
-      'Fear of making the wrong choice',
-      'Lack of clear criteria for the decision',
-      'Hidden disagreements that never surface',
-      'Consensus culture without clear process',
-    ],
-    panic_script: `**Right now, try this:**
-
-1. **Name what you're deciding**: "Let me make sure we're aligned - we're deciding [X], correct?"
-
-2. **Clarify the decision maker**: "Who is making this decision? Is it consensus, majority, or does someone have final call?"
-
-3. **Set a constraint**: "We have 15 minutes to decide. If we can't, we'll go with [default option]."
-
-4. **Make it reversible**: "Let's decide for now, try it for 2 weeks, and revisit if needed."
-
-5. **Separate concerns**: "What would need to be true for you to be okay with this decision?"
-
-**After the meeting**: Document who decided, what was decided, and when it can be revisited.`,
-    related_methods: [
-      { name: 'Gradients of Agreement', slug: 'gradients-of-agreement' },
-      { name: 'Fist of Five', slug: 'fist-of-five' },
-      { name: 'Decision Matrix', slug: 'decision-matrix' },
-      { name: 'RAPID', slug: 'rapid' },
-    ],
-    related_recipes: [
-      { title: 'Decision-Making Workshop', slug: 'decision-making', duration: 90 },
-      { title: 'Prioritization Session', slug: 'prioritization', duration: 120 },
-    ],
-  },
-};
+interface Method {
+  id: string;
+  slug: string;
+  name: string;
+}
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
+async function getChallenge(slug: string): Promise<Challenge | null> {
+  const { data, error } = await supabase
+    .from('education_challenges')
+    .select('*')
+    .eq('slug', slug)
+    .eq('is_published', true)
+    .single();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return data as Challenge;
+}
+
+async function getRelatedMethods(category: string): Promise<Method[]> {
+  // Get methods that might be related based on category mapping
+  const categoryMethodMap: Record<string, string[]> = {
+    participation: ['engagement', 'energizer'],
+    decision: ['decision'],
+    alignment: ['alignment'],
+    collaboration: ['engagement', 'ideation'],
+    efficiency: ['decision', 'alignment'],
+    innovation: ['ideation', 'problem-solving'],
+  };
+
+  const methodCategories = categoryMethodMap[category] || ['engagement'];
+
+  const { data, error } = await supabase
+    .from('education_methods')
+    .select('id, slug, name')
+    .in('category', methodCategories)
+    .eq('is_published', true)
+    .limit(4);
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data as Method[];
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const challenge = challenges[slug];
+  const challenge = await getChallenge(slug);
 
   if (!challenge) {
     return {
-      title: 'Challenge Not Found',
+      title: 'Challenge Not Found | METODIC learn',
     };
   }
 
   return {
-    title: `${challenge.title} - How to Address It`,
-    description: challenge.description,
+    title: `${challenge.title} - How to Address It | METODIC learn`,
+    description: challenge.description || `Learn how to address ${challenge.title} in your meetings and workshops.`,
     openGraph: {
       title: `${challenge.title} - How to Address It | METODIC learn`,
-      description: challenge.description,
+      description: challenge.description || `Learn how to address ${challenge.title} in your meetings and workshops.`,
       type: 'article',
     },
   };
 }
 
 export async function generateStaticParams() {
-  return Object.keys(challenges).map((slug) => ({ slug }));
+  const { data } = await supabase
+    .from('education_challenges')
+    .select('slug')
+    .eq('is_published', true);
+
+  return (data || []).map((challenge) => ({ slug: challenge.slug }));
 }
 
 export default async function ChallengePage({ params }: Props) {
   const { slug } = await params;
-  const challenge = challenges[slug];
+  const challenge = await getChallenge(slug);
 
   if (!challenge) {
     notFound();
   }
+
+  const relatedMethods = await getRelatedMethods(challenge.category);
 
   return (
     <div className="container py-12">
@@ -161,6 +171,7 @@ export default async function ChallengePage({ params }: Props) {
             <Icon icon="carbon:warning-alt" className="h-8 w-8 text-orange-600" />
           </div>
           <div>
+            <Badge variant="secondary" className="mb-2">{challenge.category}</Badge>
             <h1 className="text-4xl font-bold tracking-tight mb-2">{challenge.title}</h1>
             <p className="text-xl text-muted-foreground max-w-2xl">{challenge.description}</p>
           </div>
@@ -171,125 +182,133 @@ export default async function ChallengePage({ params }: Props) {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-8">
           {/* Panic Script - The Copy-Paste Solution */}
-          <Card className="border-primary/20 bg-primary/5">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Icon icon="carbon:lightning" className="h-5 w-5 text-primary" />
-                What to Do Right Now
-              </CardTitle>
-              <CardDescription>
-                Copy-paste script for when you&apos;re in the middle of a meeting
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {challenge.panic_script.split('\n\n').map((block, i) => {
-                  // Check if it's a header (starts and ends with **)
-                  if (block.startsWith('**') && block.includes(':**')) {
-                    const headerText = block.replace(/\*\*/g, '');
-                    return <h4 key={i} className="font-semibold text-base mt-4 first:mt-0">{headerText}</h4>;
-                  }
-                  // Check if it's a numbered list
-                  if (block.match(/^\d+\./)) {
-                    return (
-                      <div key={i} className="space-y-3">
-                        {block.split('\n').filter(line => line.trim()).map((line, j) => {
-                          // Parse the line: "1. **Action**: Description"
-                          const match = line.match(/^(\d+)\.\s*\*\*([^*]+)\*\*:\s*(.+)$/);
-                          if (match) {
-                            const [, num, action, description] = match;
-                            return (
-                              <div key={j} className="flex gap-3">
-                                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary font-medium flex items-center justify-center text-sm">
-                                  {num}
-                                </span>
-                                <div>
-                                  <span className="font-medium">{action}:</span>{' '}
-                                  <span className="text-muted-foreground">{description.replace(/"/g, '"').replace(/"/g, '"')}</span>
+          {challenge.panic_script && (
+            <Card className="border-primary/20 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Icon icon="carbon:lightning" className="h-5 w-5 text-primary" />
+                  What to Do Right Now
+                </CardTitle>
+                <CardDescription>
+                  Copy-paste script for when you&apos;re in the middle of a meeting
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {challenge.panic_script.split('\n\n').map((block, i) => {
+                    // Check if it's a header (starts and ends with **)
+                    if (block.startsWith('**') && block.includes(':**')) {
+                      const headerText = block.replace(/\*\*/g, '');
+                      return <h4 key={i} className="font-semibold text-base mt-4 first:mt-0">{headerText}</h4>;
+                    }
+                    // Check if it's a numbered list
+                    if (block.match(/^\d+\./)) {
+                      return (
+                        <div key={i} className="space-y-3">
+                          {block.split('\n').filter(line => line.trim()).map((line, j) => {
+                            // Parse the line: "1. **Action:** Description" or "1. **Action**: Description"
+                            const match = line.match(/^(\d+)\.\s*\*\*([^*]+)\*\*:?\s*(.*)$/);
+                            if (match) {
+                              const [, num, action, description] = match;
+                              return (
+                                <div key={j} className="flex gap-3">
+                                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary font-medium flex items-center justify-center text-sm">
+                                    {num}
+                                  </span>
+                                  <div>
+                                    <span className="font-medium">{action.replace(/:$/, '')}:</span>{' '}
+                                    <span className="text-muted-foreground">{renderInlineMarkdown(description)}</span>
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          }
-                          return <p key={j} className="ml-9 text-muted-foreground">{line}</p>;
-                        })}
-                      </div>
-                    );
-                  }
-                  // Regular paragraph
-                  const text = block.replace(/\*\*/g, '');
-                  return text.trim() ? <p key={i} className="text-muted-foreground">{text}</p> : null;
-                })}
-              </div>
-            </CardContent>
-          </Card>
+                              );
+                            }
+                            // Fallback: render line with markdown stripped
+                            return <p key={j} className="ml-9 text-muted-foreground">{renderInlineMarkdown(line)}</p>;
+                          })}
+                        </div>
+                      );
+                    }
+                    // Regular paragraph - render with inline markdown
+                    return block.trim() ? <p key={i} className="text-muted-foreground">{renderInlineMarkdown(block)}</p> : null;
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Symptoms */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Icon icon="carbon:stethoscope" className="h-5 w-5" />
-                How to Recognize This Challenge
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3">
-                {challenge.symptoms.map((symptom, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <Icon icon="carbon:checkmark-filled" className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                    <span>{symptom}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+          {challenge.symptoms && challenge.symptoms.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Icon icon="carbon:stethoscope" className="h-5 w-5" />
+                  How to Recognize This Challenge
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-3">
+                  {challenge.symptoms.map((symptom, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <Icon icon="carbon:checkmark-filled" className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <span>{symptom}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Root Causes */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Icon icon="carbon:tree-view" className="h-5 w-5" />
-                Why This Happens
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3">
-                {challenge.causes.map((cause, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <Icon icon="carbon:circle-dash" className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                    <span>{cause}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+          {challenge.causes && challenge.causes.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Icon icon="carbon:tree-view" className="h-5 w-5" />
+                  Why This Happens
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-3">
+                  {challenge.causes.map((cause, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <Icon icon="carbon:circle-dash" className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <span>{cause}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Methods to Try */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Icon icon="carbon:tools" className="h-5 w-5" />
-                Methods That Help
-              </CardTitle>
-              <CardDescription>
-                Proven facilitation techniques for this challenge
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid sm:grid-cols-2 gap-4">
-                {challenge.related_methods.map((method) => (
-                  <Link
-                    key={method.slug}
-                    href={`/methods/${method.slug}`}
-                    className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                  >
-                    <Icon icon="carbon:catalog" className="h-5 w-5 text-primary" />
-                    <span className="font-medium">{method.name}</span>
-                    <Icon icon="carbon:arrow-right" className="h-4 w-4 ml-auto text-muted-foreground" />
-                  </Link>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          {relatedMethods.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Icon icon="carbon:tools" className="h-5 w-5" />
+                  Methods That Help
+                </CardTitle>
+                <CardDescription>
+                  Proven facilitation techniques for this challenge
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {relatedMethods.map((method) => (
+                    <Link
+                      key={method.slug}
+                      href={`/methods/${method.slug}`}
+                      className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                    >
+                      <Icon icon="carbon:catalog" className="h-5 w-5 text-primary" />
+                      <span className="font-medium">{method.name}</span>
+                      <Icon icon="carbon:arrow-right" className="h-4 w-4 ml-auto text-muted-foreground" />
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Sidebar */}
@@ -316,31 +335,15 @@ export default async function ChallengePage({ params }: Props) {
             </CardContent>
           </Card>
 
-          {/* Related Recipes */}
-          {challenge.related_recipes.length > 0 && (
+          {/* Keywords */}
+          {challenge.keywords && challenge.keywords.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Session Recipes</CardTitle>
-                <CardDescription>
-                  Pre-built sessions that address this challenge
-                </CardDescription>
+                <CardTitle className="text-base">Related Topics</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {challenge.related_recipes.map((recipe) => (
-                  <a
-                    key={recipe.slug}
-                    href={`https://metodic.io/recipes/${recipe.slug}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="font-medium mb-1">{recipe.title}</div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Icon icon="carbon:time" className="h-4 w-4" />
-                      <span>{recipe.duration} min</span>
-                      <Icon icon="carbon:arrow-up-right" className="h-3 w-3 ml-auto" />
-                    </div>
-                  </a>
+              <CardContent className="flex flex-wrap gap-2">
+                {challenge.keywords.map((keyword, i) => (
+                  <Badge key={i} variant="outline">{keyword}</Badge>
                 ))}
               </CardContent>
             </Card>
