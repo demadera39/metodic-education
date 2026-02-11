@@ -3,62 +3,63 @@ import { Icon } from '@iconify/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/lib/supabase';
 
-// Featured challenges for the homepage grid
-const featuredChallenges = [
-  {
-    slug: 'silent-meetings',
-    title: 'Silent Meetings',
-    description: 'Only a few people speak while others stay quiet',
-    icon: 'carbon:user-speaker',
-    solutionCount: 4,
-  },
-  {
-    slug: 'decision-deadlock',
-    title: 'Decision Deadlock',
-    description: 'Same discussions repeat without resolution',
-    icon: 'carbon:decision-tree',
-    solutionCount: 4,
-  },
-  {
-    slug: 'scope-creep',
-    title: 'Scope Creep',
-    description: 'Projects keep expanding beyond plan',
-    icon: 'carbon:growth',
-    solutionCount: 3,
-  },
-  {
-    slug: 'team-misalignment',
-    title: 'Team Misalignment',
-    description: 'Everyone has different understanding of goals',
-    icon: 'carbon:arrows-horizontal',
-    solutionCount: 5,
-  },
-  {
-    slug: 'dominant-voices',
-    title: 'Dominant Voices',
-    description: 'One or two people take over discussions',
-    icon: 'carbon:volume-up-filled',
-    solutionCount: 3,
-  },
-  {
-    slug: 'low-energy',
-    title: 'Low Energy',
-    description: 'Team seems checked out and disengaged',
-    icon: 'carbon:battery-low',
-    solutionCount: 5,
-  },
-];
+// Category icons mapping
+const categoryIcons: Record<string, string> = {
+  participation: 'carbon:user-speaker',
+  decision: 'carbon:decision-tree',
+  alignment: 'carbon:arrows-horizontal',
+  collaboration: 'carbon:group',
+  efficiency: 'carbon:time',
+  innovation: 'carbon:idea',
+  conflict: 'carbon:warning-alt',
+  accountability: 'carbon:task',
+  communication: 'carbon:chat',
+  leadership: 'carbon:user-admin',
+  remote: 'carbon:laptop',
+  culture: 'carbon:group-presentation',
+};
 
-// Quick-access methods
-const popularMethods = [
-  { slug: '1-2-4-all', name: '1-2-4-All', icon: 'carbon:group' },
-  { slug: 'dot-voting', name: 'Dot Voting', icon: 'carbon:thumbs-up' },
-  { slug: 'brainwriting', name: 'Brainwriting', icon: 'carbon:pen' },
-  { slug: 'sailboat-retro', name: 'Sailboat Retro', icon: 'carbon:sailboat-offshore' },
-];
+async function getFeaturedChallenges() {
+  const { data } = await supabase
+    .from('education_challenges')
+    .select('slug, title, description, category, solution_count')
+    .eq('is_published', true)
+    .order('created_at', { ascending: false })
+    .limit(6);
 
-export default function HomePage() {
+  return data || [];
+}
+
+async function getPopularMethods() {
+  const { data } = await supabase
+    .from('education_methods')
+    .select('slug, name, category')
+    .eq('is_published', true)
+    .order('created_at', { ascending: true })
+    .limit(4);
+
+  return data || [];
+}
+
+// Method category icons
+const methodCategoryIcons: Record<string, string> = {
+  engagement: 'carbon:group',
+  decision: 'carbon:thumbs-up',
+  ideation: 'carbon:idea',
+  retrospective: 'carbon:review',
+  alignment: 'carbon:arrows-horizontal',
+  energizer: 'carbon:flash',
+  'problem-solving': 'carbon:analytics',
+};
+
+export default async function HomePage() {
+  const [featuredChallenges, popularMethods] = await Promise.all([
+    getFeaturedChallenges(),
+    getPopularMethods(),
+  ]);
+
   return (
     <div>
       {/* Hero Section */}
@@ -119,7 +120,10 @@ export default function HomePage() {
                 <CardHeader>
                   <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-orange-500/10 group-hover:bg-orange-500/20 transition-colors flex-shrink-0">
-                      <Icon icon={challenge.icon} className="h-5 w-5 text-orange-600" />
+                      <Icon
+                        icon={categoryIcons[challenge.category] || 'carbon:help'}
+                        className="h-5 w-5 text-orange-600"
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
                       <CardTitle className="text-lg group-hover:text-primary transition-colors flex items-center justify-between gap-2">
@@ -137,7 +141,7 @@ export default function HomePage() {
                 </CardHeader>
                 <CardContent>
                   <Badge variant="secondary" className="text-xs">
-                    {challenge.solutionCount} solutions
+                    {challenge.solution_count || 3} solutions
                   </Badge>
                 </CardContent>
               </Card>
@@ -170,7 +174,10 @@ export default function HomePage() {
                 <Card className="hover:bg-background hover:border-foreground/20 transition-all cursor-pointer group">
                   <CardContent className="p-6 flex items-center gap-4">
                     <div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors flex-shrink-0">
-                      <Icon icon={method.icon} className="h-6 w-6 text-primary" />
+                      <Icon
+                        icon={methodCategoryIcons[method.category] || 'carbon:catalog'}
+                        className="h-6 w-6 text-primary"
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold group-hover:text-primary transition-colors">
