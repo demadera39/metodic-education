@@ -92,7 +92,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="https://metodic.io/recipes"
+                  href="https://metodic.io/templates"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-foreground transition-colors flex items-center gap-1"
