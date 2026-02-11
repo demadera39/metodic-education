@@ -20,7 +20,7 @@ const methods: Record<string, {
   steps: string[];
   tips: string[];
   variations: string[];
-  related_problems: { title: string; slug: string }[];
+  related_challenges: { title: string; slug: string }[];
   source?: string;
 }> = {
   '1-2-4-all': {
@@ -51,7 +51,7 @@ const methods: Record<string, {
       '1-4-All: Skip pairs, go straight to groups of 4',
       'Written 1-2-4-All: Use sticky notes throughout for visual synthesis',
     ],
-    related_problems: [
+    related_challenges: [
       { title: 'Silent Meetings', slug: 'silent-meetings' },
       { title: 'Dominant Voices', slug: 'dominant-voices' },
     ],
@@ -86,7 +86,7 @@ const methods: Record<string, {
       'Brain-netting: Online version using shared documents',
       'Gallery Walk: Post sheets on walls, people walk and add',
     ],
-    related_problems: [
+    related_challenges: [
       { title: 'Silent Meetings', slug: 'silent-meetings' },
       { title: 'Low Energy', slug: 'low-energy' },
     ],
@@ -312,21 +312,21 @@ export default async function MethodPage({ params }: Props) {
             </CardContent>
           </Card>
 
-          {/* Related Problems */}
-          {method.related_problems.length > 0 && (
+          {/* Related Challenges */}
+          {method.related_challenges.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Solves These Problems</CardTitle>
+                <CardTitle className="text-base">Solves These Challenges</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {method.related_problems.map((problem) => (
+                {method.related_challenges.map((challenge) => (
                   <Link
-                    key={problem.slug}
-                    href={`/problems/${problem.slug}`}
+                    key={challenge.slug}
+                    href={`/challenges/${challenge.slug}`}
                     className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors"
                   >
-                    <Icon icon="carbon:warning-alt" className="h-4 w-4 text-destructive" />
-                    <span className="text-sm">{problem.title}</span>
+                    <Icon icon="carbon:warning-alt" className="h-4 w-4 text-orange-600" />
+                    <span className="text-sm">{challenge.title}</span>
                     <Icon icon="carbon:arrow-right" className="h-3 w-3 ml-auto text-muted-foreground" />
                   </Link>
                 ))}

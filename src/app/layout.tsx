@@ -16,11 +16,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "metodic.education - Free Facilitation Resources",
-    template: "%s | metodic.education",
+    default: "METODIC | learn - Free Facilitation Knowledge",
+    template: "%s | METODIC learn",
   },
   description:
-    "Free resources for session leaders. Learn facilitation methods, solve common workshop problems, and design better sessions.",
+    "Free facilitation knowledge for professionals. Learn methods, solve meeting problems, and run better sessions.",
   keywords: [
     "facilitation",
     "workshop",
@@ -30,6 +30,8 @@ export const metadata: Metadata = {
     "decision making",
     "collaboration",
     "methods",
+    "professionals",
+    "managers",
   ],
   authors: [{ name: "Metodic" }],
   creator: "Metodic",
@@ -37,16 +39,16 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://metodic.education",
-    siteName: "metodic.education",
-    title: "metodic.education - Free Facilitation Resources",
+    siteName: "METODIC | learn",
+    title: "METODIC | learn - Free Facilitation Knowledge",
     description:
-      "Free resources for session leaders. Learn facilitation methods, solve common workshop problems, and design better sessions.",
+      "Free facilitation knowledge for professionals. Learn methods, solve meeting problems, and run better sessions.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "metodic.education - Free Facilitation Resources",
+    title: "METODIC | learn - Free Facilitation Knowledge",
     description:
-      "Free resources for session leaders. Learn facilitation methods, solve common workshop problems, and design better sessions.",
+      "Free facilitation knowledge for professionals. Learn methods, solve meeting problems, and run better sessions.",
     creator: "@metodic_io",
   },
   robots: {

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Icon } from '@iconify/react';
 import { Button } from '@/components/ui/button';
 
@@ -10,16 +11,24 @@ export function Navbar() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
-            <Icon icon="carbon:education" className="h-8 w-8 text-primary" />
-            <span className="font-bold text-xl">metodic.education</span>
+            <Image
+              src="/metodic-logo.png"
+              alt="Metodic"
+              width={32}
+              height={32}
+              className="h-8 w-8"
+            />
+            <span className="font-bold text-xl">
+              METODIC <span className="text-muted-foreground font-normal">| learn</span>
+            </span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-6">
             <Link
-              href="/problems"
+              href="/challenges"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
-              Problems
+              Challenges
             </Link>
             <Link
               href="/methods"

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Icon } from '@iconify/react';
 
 export function Footer() {
@@ -9,11 +10,19 @@ export function Footer() {
           {/* Brand */}
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-2">
-              <Icon icon="carbon:education" className="h-6 w-6 text-primary" />
-              <span className="font-bold">metodic.education</span>
+              <Image
+                src="/metodic-logo.png"
+                alt="Metodic"
+                width={24}
+                height={24}
+                className="h-6 w-6"
+              />
+              <span className="font-bold">
+                METODIC <span className="text-muted-foreground font-normal">| learn</span>
+              </span>
             </Link>
             <p className="text-sm text-muted-foreground">
-              Free resources for session leaders. Learn methods, solve problems, design better workshops.
+              Free facilitation knowledge for professionals. Learn methods, solve challenges, run better sessions.
             </p>
           </div>
 
@@ -22,8 +31,8 @@ export function Footer() {
             <h4 className="font-semibold">Browse</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <Link href="/problems" className="hover:text-foreground transition-colors">
-                  Common Problems
+                <Link href="/challenges" className="hover:text-foreground transition-colors">
+                  Common Challenges
                 </Link>
               </li>
               <li>
@@ -39,27 +48,27 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Popular Problems */}
+          {/* Popular Challenges */}
           <div className="space-y-4">
-            <h4 className="font-semibold">Popular Problems</h4>
+            <h4 className="font-semibold">Popular Challenges</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <Link href="/problems/silent-meetings" className="hover:text-foreground transition-colors">
+                <Link href="/challenges/silent-meetings" className="hover:text-foreground transition-colors">
                   Silent Meetings
                 </Link>
               </li>
               <li>
-                <Link href="/problems/decision-deadlock" className="hover:text-foreground transition-colors">
+                <Link href="/challenges/decision-deadlock" className="hover:text-foreground transition-colors">
                   Decision Deadlock
                 </Link>
               </li>
               <li>
-                <Link href="/problems/scope-creep" className="hover:text-foreground transition-colors">
+                <Link href="/challenges/scope-creep" className="hover:text-foreground transition-colors">
                   Scope Creep
                 </Link>
               </li>
               <li>
-                <Link href="/problems/team-misalignment" className="hover:text-foreground transition-colors">
+                <Link href="/challenges/team-misalignment" className="hover:text-foreground transition-colors">
                   Team Misalignment
                 </Link>
               </li>
@@ -109,7 +118,7 @@ export function Footer() {
 
         <div className="mt-12 pt-8 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            {new Date().getFullYear()} Metodic. Free educational resources for session leaders.
+            {new Date().getFullYear()} Metodic. Free facilitation knowledge for professionals.
           </p>
           <div className="flex items-center gap-4">
             <a

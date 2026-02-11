@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 // This would come from Supabase in production
 // For now, using static data that matches your DB structure
-const problems: Record<string, {
+const challenges: Record<string, {
   title: string;
   slug: string;
   description: string;
@@ -108,34 +108,34 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const problem = problems[slug];
+  const challenge = challenges[slug];
 
-  if (!problem) {
+  if (!challenge) {
     return {
-      title: 'Problem Not Found',
+      title: 'Challenge Not Found',
     };
   }
 
   return {
-    title: `${problem.title} - How to Fix It`,
-    description: problem.description,
+    title: `${challenge.title} - How to Address It`,
+    description: challenge.description,
     openGraph: {
-      title: `${problem.title} - How to Fix It | metodic.education`,
-      description: problem.description,
+      title: `${challenge.title} - How to Address It | METODIC learn`,
+      description: challenge.description,
       type: 'article',
     },
   };
 }
 
 export async function generateStaticParams() {
-  return Object.keys(problems).map((slug) => ({ slug }));
+  return Object.keys(challenges).map((slug) => ({ slug }));
 }
 
-export default async function ProblemPage({ params }: Props) {
+export default async function ChallengePage({ params }: Props) {
   const { slug } = await params;
-  const problem = problems[slug];
+  const challenge = challenges[slug];
 
-  if (!problem) {
+  if (!challenge) {
     notFound();
   }
 
@@ -147,22 +147,22 @@ export default async function ProblemPage({ params }: Props) {
           Home
         </Link>
         <Icon icon="carbon:chevron-right" className="h-4 w-4" />
-        <Link href="/problems" className="hover:text-foreground transition-colors">
-          Problems
+        <Link href="/challenges" className="hover:text-foreground transition-colors">
+          Challenges
         </Link>
         <Icon icon="carbon:chevron-right" className="h-4 w-4" />
-        <span className="text-foreground">{problem.title}</span>
+        <span className="text-foreground">{challenge.title}</span>
       </nav>
 
       {/* Header */}
       <header className="mb-12">
         <div className="flex items-start gap-4 mb-4">
-          <div className="p-3 rounded-lg bg-destructive/10">
-            <Icon icon="carbon:warning-alt" className="h-8 w-8 text-destructive" />
+          <div className="p-3 rounded-lg bg-orange-500/10">
+            <Icon icon="carbon:warning-alt" className="h-8 w-8 text-orange-600" />
           </div>
           <div>
-            <h1 className="text-4xl font-bold tracking-tight mb-2">{problem.title}</h1>
-            <p className="text-xl text-muted-foreground max-w-2xl">{problem.description}</p>
+            <h1 className="text-4xl font-bold tracking-tight mb-2">{challenge.title}</h1>
+            <p className="text-xl text-muted-foreground max-w-2xl">{challenge.description}</p>
           </div>
         </div>
       </header>
@@ -182,15 +182,42 @@ export default async function ProblemPage({ params }: Props) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="prose prose-sm dark:prose-invert max-w-none">
-                {problem.panic_script.split('\n').map((line, i) => {
-                  if (line.startsWith('**') && line.endsWith('**')) {
-                    return <h4 key={i} className="font-semibold mt-4 mb-2">{line.replace(/\*\*/g, '')}</h4>;
+              <div className="space-y-4">
+                {challenge.panic_script.split('\n\n').map((block, i) => {
+                  // Check if it's a header (starts and ends with **)
+                  if (block.startsWith('**') && block.includes(':**')) {
+                    const headerText = block.replace(/\*\*/g, '');
+                    return <h4 key={i} className="font-semibold text-base mt-4 first:mt-0">{headerText}</h4>;
                   }
-                  if (line.match(/^\d+\./)) {
-                    return <p key={i} className="ml-4 mb-2">{line}</p>;
+                  // Check if it's a numbered list
+                  if (block.match(/^\d+\./)) {
+                    return (
+                      <div key={i} className="space-y-3">
+                        {block.split('\n').filter(line => line.trim()).map((line, j) => {
+                          // Parse the line: "1. **Action**: Description"
+                          const match = line.match(/^(\d+)\.\s*\*\*([^*]+)\*\*:\s*(.+)$/);
+                          if (match) {
+                            const [, num, action, description] = match;
+                            return (
+                              <div key={j} className="flex gap-3">
+                                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary font-medium flex items-center justify-center text-sm">
+                                  {num}
+                                </span>
+                                <div>
+                                  <span className="font-medium">{action}:</span>{' '}
+                                  <span className="text-muted-foreground">{description.replace(/"/g, '"').replace(/"/g, '"')}</span>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return <p key={j} className="ml-9 text-muted-foreground">{line}</p>;
+                        })}
+                      </div>
+                    );
                   }
-                  return line ? <p key={i} className="mb-2">{line}</p> : <br key={i} />;
+                  // Regular paragraph
+                  const text = block.replace(/\*\*/g, '');
+                  return text.trim() ? <p key={i} className="text-muted-foreground">{text}</p> : null;
                 })}
               </div>
             </CardContent>
@@ -201,12 +228,12 @@ export default async function ProblemPage({ params }: Props) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Icon icon="carbon:stethoscope" className="h-5 w-5" />
-                How to Recognize This Problem
+                How to Recognize This Challenge
               </CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="space-y-3">
-                {problem.symptoms.map((symptom, i) => (
+                {challenge.symptoms.map((symptom, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <Icon icon="carbon:checkmark-filled" className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                     <span>{symptom}</span>
@@ -226,7 +253,7 @@ export default async function ProblemPage({ params }: Props) {
             </CardHeader>
             <CardContent>
               <ul className="space-y-3">
-                {problem.causes.map((cause, i) => (
+                {challenge.causes.map((cause, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <Icon icon="carbon:circle-dash" className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                     <span>{cause}</span>
@@ -244,12 +271,12 @@ export default async function ProblemPage({ params }: Props) {
                 Methods That Help
               </CardTitle>
               <CardDescription>
-                Proven facilitation techniques for this problem
+                Proven facilitation techniques for this challenge
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid sm:grid-cols-2 gap-4">
-                {problem.related_methods.map((method) => (
+                {challenge.related_methods.map((method) => (
                   <Link
                     key={method.slug}
                     href={`/methods/${method.slug}`}
@@ -272,13 +299,13 @@ export default async function ProblemPage({ params }: Props) {
             <CardHeader>
               <CardTitle>Want a Complete Solution?</CardTitle>
               <CardDescription className="text-primary-foreground/80">
-                Metodic builds full session agendas based on your problem
+                Metodic builds full session agendas based on your challenge
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button asChild variant="secondary" className="w-full">
                 <a
-                  href={`https://metodic.io/recipes?problem=${problem.slug}`}
+                  href={`https://metodic.io/recipes?challenge=${challenge.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -290,16 +317,16 @@ export default async function ProblemPage({ params }: Props) {
           </Card>
 
           {/* Related Recipes */}
-          {problem.related_recipes.length > 0 && (
+          {challenge.related_recipes.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Session Recipes</CardTitle>
                 <CardDescription>
-                  Pre-built sessions that solve this problem
+                  Pre-built sessions that address this challenge
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                {problem.related_recipes.map((recipe) => (
+                {challenge.related_recipes.map((recipe) => (
                   <a
                     key={recipe.slug}
                     href={`https://metodic.io/recipes/${recipe.slug}`}
@@ -327,7 +354,7 @@ export default async function ProblemPage({ params }: Props) {
             <CardContent className="flex gap-2">
               <Button variant="outline" size="sm" asChild>
                 <a
-                  href={`https://twitter.com/intent/tweet?text=How to fix ${encodeURIComponent(problem.title)} in your meetings&url=${encodeURIComponent(`https://metodic.education/problems/${problem.slug}`)}`}
+                  href={`https://twitter.com/intent/tweet?text=How to address ${encodeURIComponent(challenge.title)} in your meetings&url=${encodeURIComponent(`https://metodic.education/challenges/${challenge.slug}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -336,7 +363,7 @@ export default async function ProblemPage({ params }: Props) {
               </Button>
               <Button variant="outline" size="sm" asChild>
                 <a
-                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://metodic.education/problems/${problem.slug}`)}`}
+                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://metodic.education/challenges/${challenge.slug}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
