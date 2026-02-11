@@ -97,7 +97,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="hover:text-foreground transition-colors flex items-center gap-1"
                 >
-                  Session Recipes
+                  Templates
                   <Icon icon="carbon:arrow-up-right" className="h-3 w-3" />
                 </a>
               </li>
