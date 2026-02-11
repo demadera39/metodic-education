@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# metodic.education
 
-## Getting Started
+Free educational wiki for session leaders. This site serves as an SEO honeypot that captures managers searching for meeting problems and bridges them to [metodic.io](https://metodic.io) for full session design.
 
-First, run the development server:
+## Strategy
+
+- **Target:** Managers searching Google for problems like "team won't make decisions" or "silent meetings"
+- **Content:** Problem pages with panic scripts (copy-paste solutions) + method explainers
+- **Conversion:** Deep links to metodic.io recipes and session builder
+
+## Tech Stack
+
+- **Framework:** Next.js 14 (App Router)
+- **Styling:** Tailwind CSS + shadcn/ui
+- **Icons:** Iconify (Carbon icons)
+- **Database:** Supabase (shared with metodic.io)
+- **Deployment:** Vercel
+
+## Local Development
 
 ```bash
+# Install dependencies
+npm install
+
+# Copy environment variables
+cp .env.local.example .env.local
+# Edit .env.local with your Supabase credentials
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/
+│   ├── problems/          # Problem pages (SEO focus)
+│   │   ├── [slug]/        # Individual problem pages
+│   │   └── page.tsx       # Problems index
+│   ├── methods/           # Method pages
+│   │   ├── [slug]/        # Individual method pages
+│   │   └── page.tsx       # Methods index
+│   ├── frameworks/        # Learning framework pages
+│   └── page.tsx           # Homepage
+├── components/
+│   ├── layout/            # Navbar, Footer
+│   └── ui/                # shadcn/ui components
+└── lib/
+    ├── supabase.ts        # Supabase client
+    └── utils.ts           # Utilities
+```
 
-## Learn More
+## Content Types
 
-To learn more about Next.js, take a look at the following resources:
+### Problems
+Each problem page includes:
+- **Panic Script:** Copy-paste text for immediate use
+- **Symptoms:** How to recognize the problem
+- **Root Causes:** Why this happens
+- **Related Methods:** Techniques that help
+- **CTA:** Link to metodic.io recipe
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Methods
+Each method page includes:
+- **When to Use:** Context for the method
+- **Step-by-Step:** Instructions to facilitate
+- **Tips:** Facilitator advice
+- **Variations:** Alternative approaches
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment
 
-## Deploy on Vercel
+Configured for Vercel deployment with:
+- Domain: metodic.education
+- Environment variables set in Vercel dashboard
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Related Projects
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [metodic.io](https://metodic.io) - Main SaaS product
