@@ -21,13 +21,6 @@ export const metadata: Metadata = {
   },
   description:
     "Free facilitation knowledge for professionals. Learn methods, solve meeting problems, and run better sessions.",
-  icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/favicon.png", type: "image/png" },
-    ],
-    apple: "/favicon.png",
-  },
   keywords: [
     "facilitation",
     "workshop",
