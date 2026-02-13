@@ -34,35 +34,79 @@ interface FrameworksSearchProps {
 
 export function FrameworksSearch({ categoryGroups, totalFrameworks }: FrameworksSearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedPhases, setSelectedPhases] = useState<'all' | 'short' | 'medium' | 'long'>('all');
+  const [selectedDuration, setSelectedDuration] = useState<'all' | 'short' | 'medium' | 'long' | 'unknown'>('all');
+
+  const categoryOptions = useMemo(
+    () => ['all', ...categoryGroups.map((category) => category.category)],
+    [categoryGroups]
+  );
+
+  const parseMaxMinutes = (durationText: string | null): number | null => {
+    if (!durationText) return null;
+    const matches = durationText.match(/\d+/g);
+    if (!matches || matches.length === 0) return null;
+    const values = matches.map((v) => Number(v)).filter((v) => !Number.isNaN(v));
+    if (values.length === 0) return null;
+    return Math.max(...values);
+  };
 
   const filteredCategories = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return categoryGroups;
-    }
-
     const query = searchQuery.toLowerCase();
+    const hasQuery = Boolean(searchQuery.trim());
 
     return categoryGroups
+      .filter((category) => selectedCategory === 'all' || category.category === selectedCategory)
       .map(category => ({
         ...category,
         frameworks: category.frameworks.filter(framework =>
-          framework.name.toLowerCase().includes(query) ||
-          (framework.description && framework.description.toLowerCase().includes(query)) ||
-          (framework.when_to_use && framework.when_to_use.toLowerCase().includes(query)) ||
-          (framework.best_for && framework.best_for.some(bf => bf.toLowerCase().includes(query))) ||
-          category.category.toLowerCase().includes(query) ||
-          category.challenge.toLowerCase().includes(query)
+          (!hasQuery ||
+            framework.name.toLowerCase().includes(query) ||
+            (framework.description && framework.description.toLowerCase().includes(query)) ||
+            (framework.when_to_use && framework.when_to_use.toLowerCase().includes(query)) ||
+            (framework.best_for && framework.best_for.some(bf => bf.toLowerCase().includes(query))) ||
+            category.category.toLowerCase().includes(query) ||
+            category.challenge.toLowerCase().includes(query)) &&
+          (() => {
+            if (selectedPhases === 'all') return true;
+            const count = framework.phases?.length || 0;
+            if (selectedPhases === 'short') return count > 0 && count <= 3;
+            if (selectedPhases === 'medium') return count >= 4 && count <= 5;
+            return count >= 6;
+          })() &&
+          (() => {
+            if (selectedDuration === 'all') return true;
+            const maxMinutes = parseMaxMinutes(framework.typical_duration);
+            if (selectedDuration === 'unknown') return maxMinutes === null;
+            if (maxMinutes === null) return false;
+            if (selectedDuration === 'short') return maxMinutes <= 60;
+            if (selectedDuration === 'medium') return maxMinutes > 60 && maxMinutes <= 180;
+            return maxMinutes > 180;
+          })()
         ),
       }))
       .filter(category => category.frameworks.length > 0);
-  }, [searchQuery, categoryGroups]);
+  }, [searchQuery, selectedCategory, selectedPhases, selectedDuration, categoryGroups]);
 
   const filteredCount = filteredCategories.reduce((acc, cat) => acc + cat.frameworks.length, 0);
+  const hasActiveFilters =
+    Boolean(searchQuery.trim()) ||
+    selectedCategory !== 'all' ||
+    selectedPhases !== 'all' ||
+    selectedDuration !== 'all';
+
+  const clearAllFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('all');
+    setSelectedPhases('all');
+    setSelectedDuration('all');
+  };
 
   return (
     <>
       {/* Search */}
-      <div className="mb-8">
+      <div className="mb-8 space-y-4">
         <div className="relative max-w-md">
           <Icon
             icon="carbon:search"
@@ -76,9 +120,46 @@ export function FrameworksSearch({ categoryGroups, totalFrameworks }: Frameworks
             className="pl-10"
           />
         </div>
-        {searchQuery && (
+        <div className="grid sm:grid-cols-3 gap-3 max-w-3xl">
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+          >
+            {categoryOptions.map((category) => (
+              <option key={category} value={category}>
+                {category === 'all' ? 'All categories' : category}
+              </option>
+            ))}
+          </select>
+          <select
+            value={selectedPhases}
+            onChange={(e) => setSelectedPhases(e.target.value as 'all' | 'short' | 'medium' | 'long')}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+          >
+            <option value="all">Any phase count</option>
+            <option value="short">Up to 3 phases</option>
+            <option value="medium">4 to 5 phases</option>
+            <option value="long">6+ phases</option>
+          </select>
+          <select
+            value={selectedDuration}
+            onChange={(e) => setSelectedDuration(e.target.value as 'all' | 'short' | 'medium' | 'long' | 'unknown')}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+          >
+            <option value="all">Any duration</option>
+            <option value="short">Short (up to 60 min)</option>
+            <option value="medium">Medium (61 to 180 min)</option>
+            <option value="long">Long (180+ min)</option>
+            <option value="unknown">Duration unknown</option>
+          </select>
+        </div>
+        {hasActiveFilters && (
           <p className="text-sm text-muted-foreground mt-2">
             Showing {filteredCount} of {totalFrameworks} frameworks
+            <button onClick={clearAllFilters} className="ml-3 text-primary hover:underline">
+              Clear all filters
+            </button>
           </p>
         )}
       </div>
@@ -151,11 +232,8 @@ export function FrameworksSearch({ categoryGroups, totalFrameworks }: Frameworks
           <p className="text-muted-foreground mb-4">
             Try describing your challenge differently or browse all frameworks
           </p>
-          <button
-            onClick={() => setSearchQuery('')}
-            className="text-primary hover:underline"
-          >
-            Clear search
+          <button onClick={clearAllFilters} className="text-primary hover:underline">
+            Clear filters
           </button>
         </div>
       )}

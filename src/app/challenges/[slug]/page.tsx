@@ -11,9 +11,13 @@ import { supabase } from '@/lib/supabase';
 function renderInlineMarkdown(text: string): React.ReactNode {
   if (!text) return null;
 
-  // Replace **text** with bold, *text* with italic, and clean up quotes
+  // Replace **text** with bold and clean up common quote artifacts
   const parts: React.ReactNode[] = [];
-  let remaining = text.replace(/"/g, '"').replace(/"/g, '"').replace(/'/g, "'").replace(/'/g, "'");
+  let remaining = text
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/\*\*/g, '')
+    .trim();
   let key = 0;
 
   // Process bold (**text**)
@@ -41,6 +45,109 @@ function renderInlineMarkdown(text: string): React.ReactNode {
   }
 
   return parts.length > 0 ? parts : text;
+}
+
+interface ParsedScriptBlock {
+  heading?: string;
+  paragraph?: string;
+  steps?: Array<{ number: string; title: string; description: string }>;
+}
+
+interface RenderScriptBlock extends ParsedScriptBlock {
+  isAfterMeeting: boolean;
+}
+
+function parsePanicScript(script: string): ParsedScriptBlock[] {
+  if (!script) return [];
+
+  const normalized = script
+    .replace(/\r\n/g, '\n')
+    .replace(/\u00a0/g, ' ')
+    // Force section split if "After the meeting" appears inline
+    .replace(/\s+(?:\*\*)?\s*(After the meeting\s*:?\s*)(?:\*\*)?/gi, '\n\n$1')
+    .trim();
+
+  const rawBlocks = normalized
+    .split(/\n{2,}/)
+    .map((b) => b.trim())
+    .filter(Boolean);
+
+  const parsed: ParsedScriptBlock[] = [];
+
+  for (const block of rawBlocks) {
+    const afterMeetingPrefixMatch = block.match(
+      /^(?:\*\*)?\s*after the meeting\s*:?\s*(?:\*\*)?\s*([\s\S]*)$/i
+    );
+    const forcedHeading = afterMeetingPrefixMatch ? 'After the meeting' : undefined;
+    const blockBody = afterMeetingPrefixMatch ? afterMeetingPrefixMatch[1].trim() : block;
+
+    // Handle bullet lists quickly
+    if (blockBody.startsWith('* ') || blockBody.includes(' * ')) {
+      const bullets = blockBody
+        .replace(/^\*\s*/, '')
+        .split(/\n\*\s*|\s\*\s+/)
+        .map((line) => line.replace(/^\*\s*/, '').trim())
+        .filter(Boolean);
+
+      if (forcedHeading) {
+        parsed.push({
+          heading: forcedHeading,
+          steps: bullets.map((bullet, idx) => ({
+            number: String(idx + 1),
+            title: 'Action',
+            description: bullet,
+          })),
+        });
+      } else {
+        bullets.forEach((bullet) => parsed.push({ paragraph: `• ${bullet}` }));
+      }
+      continue;
+    }
+
+    // Handle "Section Name: 1. ... 2. ..." including markdown variants like
+    // "**After the meeting:** 1. ... 2. ..."
+    const inlineSectionMatch = blockBody.match(
+      /^(?:\*\*)?\s*([^:\n*][^:\n]{1,100}?)(?::)?(?:\*\*)?\s*:\s*(\d+\..*)$/s
+    );
+    const sectionHeading = forcedHeading || inlineSectionMatch?.[1]?.replace(/\*\*/g, '').trim();
+    const listSource = inlineSectionMatch ? inlineSectionMatch[2] : blockBody;
+
+    // Extract numbered steps even if they are on one line
+    const stepMatches = Array.from(
+      listSource.matchAll(/(\d+)\.\s*([\s\S]*?)(?=(?:\s+\d+\.\s)|$)/g)
+    );
+
+    if (stepMatches.length > 0) {
+      const steps = stepMatches
+        .map((m) => {
+          const number = m[1];
+          const rawContent = m[2].trim();
+          const titleMatch = rawContent.match(/^([^:]{2,90}):\s*([\s\S]*)$/);
+          return {
+            number,
+            title: titleMatch ? titleMatch[1].trim() : 'Action',
+            description: titleMatch ? titleMatch[2].trim() : rawContent,
+          };
+        })
+        .filter((s) => s.description || s.title);
+
+      parsed.push({
+        heading: sectionHeading,
+        steps,
+      });
+      continue;
+    }
+
+    // Handle simple heading-only line like "**After the meeting:**"
+    if (blockBody.startsWith('**') && blockBody.includes(':**')) {
+      parsed.push({ heading: blockBody.replace(/\*\*/g, '').replace(/:$/, '') });
+      continue;
+    }
+
+    parsed.push({ heading: forcedHeading, paragraph: forcedHeading ? blockBody : block });
+  }
+
+  return parsed;
 }
 
 interface Challenge {
@@ -148,6 +255,45 @@ export default async function ChallengePage({ params }: Props) {
   }
 
   const relatedMethods = await getRelatedMethods(challenge.category);
+  const parsedScriptBlocks = challenge.panic_script
+    ? parsePanicScript(challenge.panic_script)
+    : [];
+  const renderScriptBlocks: RenderScriptBlock[] = parsedScriptBlocks
+    .map((block, i, arr) => {
+      const markerText = `${block.heading || ''} ${block.paragraph || ''}`.toLowerCase();
+      const explicitAfterMeeting = markerText.includes('after the meeting');
+      const previousBlock = i > 0 ? arr[i - 1] : undefined;
+      const firstStepNumber = block.steps?.[0]?.number;
+      const previousLastStepNumber = previousBlock?.steps?.[previousBlock.steps.length - 1]?.number;
+      const implicitAfterMeeting =
+        !explicitAfterMeeting &&
+        !block.heading &&
+        Boolean(block.steps?.length) &&
+        firstStepNumber === '1' &&
+        Boolean(previousBlock?.steps?.length) &&
+        previousLastStepNumber !== '1';
+
+      return {
+        ...block,
+        isAfterMeeting: explicitAfterMeeting || implicitAfterMeeting,
+      };
+    })
+    .reduce<RenderScriptBlock[]>((acc, block) => {
+      const previous = acc[acc.length - 1];
+      if (previous && previous.isAfterMeeting && block.isAfterMeeting) {
+        // Merge consecutive "After the meeting" blocks into one section
+        acc[acc.length - 1] = {
+          ...previous,
+          heading: 'After the meeting',
+          paragraph: [previous.paragraph, block.paragraph].filter(Boolean).join('\n\n') || undefined,
+          steps: [...(previous.steps || []), ...(block.steps || [])],
+          isAfterMeeting: true,
+        };
+        return acc;
+      }
+      acc.push(block);
+      return acc;
+    }, []);
 
   return (
     <div className="container py-12">
@@ -174,6 +320,14 @@ export default async function ChallengePage({ params }: Props) {
             <Badge variant="secondary" className="mb-2">{challenge.category}</Badge>
             <h1 className="text-4xl font-bold tracking-tight mb-2">{challenge.title}</h1>
             <p className="text-xl text-muted-foreground max-w-2xl">{challenge.description}</p>
+            {challenge.solution_count > 0 && (
+              <div className="mt-4">
+                <Badge variant="outline" className="text-sm">
+                  <Icon icon="carbon:list" className="h-4 w-4 mr-1" />
+                  {challenge.solution_count} ready-to-use solutions in this guide
+                </Badge>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -190,46 +344,72 @@ export default async function ChallengePage({ params }: Props) {
                   What to Do Right Now
                 </CardTitle>
                 <CardDescription>
-                  Copy-paste script for when you&apos;re in the middle of a meeting
+                  Copy-paste actions for when you&apos;re in the middle of a meeting
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {challenge.panic_script.split('\n\n').map((block, i) => {
-                    // Check if it's a header (starts and ends with **)
-                    if (block.startsWith('**') && block.includes(':**')) {
-                      const headerText = block.replace(/\*\*/g, '');
-                      return <h4 key={i} className="font-semibold text-base mt-4 first:mt-0">{headerText}</h4>;
-                    }
-                    // Check if it's a numbered list
-                    if (block.match(/^\d+\./)) {
+                  {renderScriptBlocks.map((block, i) => {
+                    if (block.steps && block.steps.length > 0) {
                       return (
-                        <div key={i} className="space-y-3">
-                          {block.split('\n').filter(line => line.trim()).map((line, j) => {
-                            // Parse the line: "1. **Action:** Description" or "1. **Action**: Description"
-                            const match = line.match(/^(\d+)\.\s*\*\*([^*]+)\*\*:?\s*(.*)$/);
-                            if (match) {
-                              const [, num, action, description] = match;
-                              return (
-                                <div key={j} className="flex gap-3">
-                                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary font-medium flex items-center justify-center text-sm">
-                                    {num}
-                                  </span>
-                                  <div>
-                                    <span className="font-medium">{action.replace(/:$/, '')}:</span>{' '}
-                                    <span className="text-muted-foreground">{renderInlineMarkdown(description)}</span>
-                                  </div>
-                                </div>
-                              );
-                            }
-                            // Fallback: render line with markdown stripped
-                            return <p key={j} className="ml-9 text-muted-foreground">{renderInlineMarkdown(line)}</p>;
-                          })}
+                        <div
+                          key={i}
+                          className={`space-y-3 rounded-xl p-3 ${
+                            block.isAfterMeeting
+                              ? 'border border-amber-300/50 bg-amber-50/60 dark:bg-amber-950/20'
+                              : ''
+                          }`}
+                        >
+                          {block.isAfterMeeting && (
+                            <Badge variant="outline" className="mb-1 w-fit border-amber-400/60 text-amber-700 dark:text-amber-300">
+                              After the meeting
+                            </Badge>
+                          )}
+                          {block.heading && block.heading.toLowerCase() !== 'after the meeting' && (
+                            <h4 className="font-semibold text-base">{block.heading}</h4>
+                          )}
+                          {block.steps.map((step, j) => (
+                            <div key={`${i}-${j}`} className="flex gap-3 rounded-lg border border-primary/20 bg-background/60 p-3">
+                              <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 text-primary font-medium flex items-center justify-center text-sm">
+                                {step.number}
+                              </span>
+                              <div className="space-y-1">
+                                <p className="font-medium">{renderInlineMarkdown(step.title)}</p>
+                                <p className="text-muted-foreground">{renderInlineMarkdown(step.description)}</p>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       );
                     }
-                    // Regular paragraph - render with inline markdown
-                    return block.trim() ? <p key={i} className="text-muted-foreground">{renderInlineMarkdown(block)}</p> : null;
+
+                    if (block.heading) {
+                      return (
+                        <div
+                          key={i}
+                          className={`rounded-lg p-2 ${block.isAfterMeeting ? 'border border-amber-300/50 bg-amber-50/60 dark:bg-amber-950/20' : ''}`}
+                        >
+                          {block.isAfterMeeting && (
+                            <Badge variant="outline" className="mb-1 w-fit border-amber-400/60 text-amber-700 dark:text-amber-300">
+                              After the meeting
+                            </Badge>
+                          )}
+                          {block.heading.toLowerCase() !== 'after the meeting' && (
+                            <h4 className="font-semibold text-base mt-2 first:mt-0">{block.heading}</h4>
+                          )}
+                        </div>
+                      );
+                    }
+
+                    if (block.paragraph) {
+                      return (
+                        <p key={i} className="text-muted-foreground leading-relaxed">
+                          {renderInlineMarkdown(block.paragraph)}
+                        </p>
+                      );
+                    }
+
+                    return null;
                   })}
                 </div>
               </CardContent>

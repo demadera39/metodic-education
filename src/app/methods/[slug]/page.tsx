@@ -33,6 +33,75 @@ interface Challenge {
   title: string;
 }
 
+function normalizeCategory(rawCategory: string | null | undefined): string {
+  const raw = (rawCategory || '').toLowerCase();
+
+  if (raw.includes('decision')) return 'decision';
+  if (raw.includes('ideation') || raw.includes('innovation')) return 'ideation';
+  if (raw.includes('retrospective') || raw.includes('reflection')) return 'retrospective';
+  if (raw.includes('energizer') || raw.includes('icebreaker')) return 'energizer';
+  if (
+    raw.includes('problem solving') ||
+    raw.includes('problem-solving') ||
+    raw.includes('analysis') ||
+    raw.includes('systems thinking') ||
+    raw.includes('evaluation')
+  ) {
+    return 'problem-solving';
+  }
+  if (
+    raw.includes('alignment') ||
+    raw.includes('team building') ||
+    raw.includes('communication') ||
+    raw.includes('collaboration')
+  ) {
+    return 'alignment';
+  }
+
+  return 'engagement';
+}
+
+function parseMaxMinutes(durationRange: string | null | undefined): number | null {
+  if (!durationRange) return null;
+  const matches = durationRange.match(/\d+/g);
+  if (!matches || matches.length === 0) return null;
+  const values = matches.map((v) => Number(v)).filter((v) => !Number.isNaN(v));
+  if (values.length === 0) return null;
+  return Math.max(...values);
+}
+
+function inferDifficulty(
+  durationRange: string | null | undefined,
+  keywords: string[] = [],
+  name: string = ''
+): 'easy' | 'medium' | 'hard' {
+  const maxMinutes = parseMaxMinutes(durationRange);
+  const combined = `${name} ${keywords.join(' ')}`.toLowerCase();
+
+  if (
+    combined.includes('advanced') ||
+    combined.includes('expert') ||
+    combined.includes('complex') ||
+    combined.includes('deep democracy')
+  ) {
+    return 'hard';
+  }
+
+  if (
+    combined.includes('icebreaker') ||
+    combined.includes('energizer') ||
+    combined.includes('check-in') ||
+    combined.includes('dot voting')
+  ) {
+    return 'easy';
+  }
+
+  if (maxMinutes === null) return 'medium';
+  if (maxMinutes <= 15) return 'easy';
+  if (maxMinutes <= 60) return 'medium';
+  return 'hard';
+}
+
 type Props = {
   params: Promise<{ slug: string }>;
 };
@@ -67,13 +136,17 @@ async function getMethod(slug: string): Promise<Method | null> {
     id: curatedMethod.id,
     slug: curatedMethod.slug,
     name: curatedMethod.name,
-    category: curatedMethod.category || 'engagement',
+    category: normalizeCategory(curatedMethod.category),
     description: curatedMethod.description,
     when_to_use: curatedMethod.purpose,
     how_it_works: curatedMethod.pain_point ? `Solves: ${curatedMethod.pain_point}` : null,
     duration_range: curatedMethod.duration_label,
     group_size_range: curatedMethod.group_size_label,
-    difficulty: 'medium' as const,
+    difficulty: inferDifficulty(
+      curatedMethod.duration_label,
+      Array.isArray(curatedMethod.tags) ? curatedMethod.tags : [],
+      curatedMethod.name
+    ),
     steps: curatedMethod.steps || [],
     tips: curatedMethod.facilitator_tips || [],
     variations: curatedMethod.variations || [],
@@ -170,7 +243,7 @@ export default async function MethodPage({ params }: Props) {
 
   // Parse steps - handle both array of objects and array of strings
   const steps = Array.isArray(method.steps)
-    ? method.steps.map((step: any) =>
+    ? method.steps.map((step: string | { title?: string; description?: string }) =>
         typeof step === 'string'
           ? step
           : `${step.title}: ${step.description}`

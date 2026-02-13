@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
+import { EmailSignupCta } from '@/components/marketing/EmailSignupCta';
 
 // Category icons mapping
 const categoryIcons: Record<string, string> = {
@@ -33,14 +34,41 @@ async function getFeaturedChallenges() {
 }
 
 async function getPopularMethods() {
-  const { data } = await supabase
+  // First try education_methods (editorial set)
+  const { data: educationMethods, error: educationError } = await supabase
     .from('education_methods')
     .select('slug, name, category')
     .eq('is_published', true)
-    .order('created_at', { ascending: true })
+    .order('name')
     .limit(4);
 
-  return data || [];
+  if (!educationError && educationMethods && educationMethods.length > 0) {
+    return educationMethods;
+  }
+
+  // Fallback to curated_methods so homepage never appears empty
+  const { data: curatedMethods } = await supabase
+    .from('curated_methods')
+    .select('slug, name, category')
+    .eq('is_active', true)
+    .order('name')
+    .limit(4);
+
+  return curatedMethods || [];
+}
+
+async function getFeaturedPlaybooks() {
+  const { data } = await supabase
+    .from('education_playbooks')
+    .select('slug, title, summary, category, estimated_duration, sequence, generated_from')
+    .eq('is_published', true)
+    .order('updated_at', { ascending: false })
+    .limit(2);
+
+  return (data || []).map((playbook) => ({
+    ...playbook,
+    step_count: Array.isArray(playbook.sequence) ? playbook.sequence.length : 0,
+  }));
 }
 
 // Method category icons
@@ -55,9 +83,10 @@ const methodCategoryIcons: Record<string, string> = {
 };
 
 export default async function HomePage() {
-  const [featuredChallenges, popularMethods] = await Promise.all([
+  const [featuredChallenges, popularMethods, featuredPlaybooks] = await Promise.all([
     getFeaturedChallenges(),
     getPopularMethods(),
+    getFeaturedPlaybooks(),
   ]);
 
   return (
@@ -67,16 +96,16 @@ export default async function HomePage() {
         <div className="container py-16 md:py-24">
           <div className="max-w-3xl">
             <Badge variant="secondary" className="mb-4">
-              Free knowledge for professionals
+              Free facilitation knowledge
             </Badge>
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
-              Solve your meeting challenges.
+              Run better meetings and sessions.
               <br />
-              <span className="text-muted-foreground">Right now.</span>
+              <span className="text-muted-foreground">Starting today.</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8">
-              Practical scripts, methods, and techniques to transform your workshops and meetings.
-              No signup required. Just solutions.
+              Find your challenge, copy a script, and lead your next meeting or session with confidence.
+              No signup required.
             </p>
             <div className="flex flex-wrap gap-4">
               <Button asChild size="lg">
@@ -91,6 +120,10 @@ export default async function HomePage() {
                   Browse Methods
                 </Link>
               </Button>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-5">
+              <Badge variant="outline">Start with challenges</Badge>
+              <Badge variant="outline">Or browse methods</Badge>
             </div>
           </div>
         </div>
@@ -196,6 +229,66 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Playbooks Section */}
+      <section className="container py-16">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <h2 className="text-2xl font-bold mb-2">Example Playbooks</h2>
+            <p className="text-muted-foreground">
+              End-to-end sequences that combine challenges, interventions, and facilitator scripts
+            </p>
+          </div>
+          <Button asChild variant="ghost">
+            <Link href="/playbooks" className="flex items-center gap-2">
+              See all playbooks
+              <Icon icon="carbon:arrow-right" className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          {featuredPlaybooks.length === 0 && (
+            <Card>
+              <CardContent className="p-6">
+                <p className="text-sm text-muted-foreground">
+                  Playbooks are being prepared. Check back soon for sequenced guides you can run as-is.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+          {featuredPlaybooks.map((playbook) => (
+            <Link key={playbook.slug} href={`/playbooks/${playbook.slug}`}>
+              <Card className="h-full hover:bg-muted/50 hover:border-foreground/20 transition-all cursor-pointer group">
+                <CardHeader>
+                  <CardTitle className="text-lg group-hover:text-primary transition-colors flex items-center justify-between gap-2">
+                    <span>{playbook.title}</span>
+                    <Icon
+                      icon="carbon:arrow-right"
+                      className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0"
+                    />
+                  </CardTitle>
+                  <CardDescription className="mt-1">
+                    {playbook.summary || 'A practical sequence to solve recurring meeting and session problems.'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap gap-2">
+                  <Badge variant="secondary">{playbook.step_count || 0} steps</Badge>
+                  {playbook.generated_from?.transformation_horizon && (
+                    <Badge variant="outline">{playbook.generated_from.transformation_horizon}</Badge>
+                  )}
+                  {playbook.estimated_duration && (
+                    <Badge variant="outline">{playbook.estimated_duration}</Badge>
+                  )}
+                  {playbook.category && (
+                    <Badge variant="outline">{playbook.category}</Badge>
+                  )}
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {/* How It Works */}
       <section className="container py-16">
         <h2 className="text-2xl font-bold text-center mb-12">
@@ -235,17 +328,66 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Audience Positioning */}
+      <section className="border-y bg-muted/20">
+        <div className="container py-16">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-2xl font-bold text-center mb-10">
+              Built for both session leaders and facilitators
+            </h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Icon icon="carbon:user-follow" className="h-5 w-5 text-primary" />
+                    If facilitation is not your core job
+                  </CardTitle>
+                  <CardDescription>
+                    Use challenge pages and copy-paste scripts to run better meetings immediately.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-5">
+                    <li>Start from a real problem, not a blank agenda</li>
+                    <li>Use ready-to-say prompts in your next meeting</li>
+                    <li>Get a practical next step in under 10 minutes</li>
+                  </ul>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Icon icon="carbon:skill-level-advanced" className="h-5 w-5 text-primary" />
+                    If you are a professional facilitator
+                  </CardTitle>
+                  <CardDescription>
+                    Use METODIC learn as a pattern bank and quick prep library for high-quality interventions.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-5">
+                    <li>Find method variants faster for context-specific constraints</li>
+                    <li>Refresh scripts and framing language before sessions</li>
+                    <li>Pair methods into stronger sequences with Metodic</li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="border-t bg-muted/30">
         <div className="container py-16">
           <div className="max-w-2xl mx-auto text-center">
             <Icon icon="carbon:flash" className="h-12 w-12 mx-auto mb-4 text-primary" />
             <h2 className="text-2xl font-bold mb-4">
-              Need a Full Session, Not Just a Quick Fix?
+              Need more than a script?
             </h2>
             <p className="text-muted-foreground mb-8">
-              Metodic builds complete workshop agendas with materials, slides, and facilitator notes.
-              Describe your challenge, get a ready-to-run session.
+              METODIC learn stays free as your method and challenge library.
+              Metodic helps you turn that knowledge into complete session agendas with materials, slides, and facilitator notes.
             </p>
             <Button asChild size="lg">
               <a
@@ -255,10 +397,20 @@ export default async function HomePage() {
                 className="inline-flex items-center gap-2"
               >
                 <Icon icon="carbon:rocket" className="h-5 w-5" />
-                Build a Session with Metodic
+                Build a complete session in Metodic
               </a>
             </Button>
           </div>
+        </div>
+      </section>
+
+      <section className="container py-12">
+        <div className="max-w-3xl mx-auto">
+          <EmailSignupCta
+            source="homepage"
+            title="Want updates and news?"
+            description="Get updates and news about new methods, frameworks, and playbooks on METODIC learn."
+          />
         </div>
       </section>
     </div>

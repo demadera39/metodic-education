@@ -40,32 +40,70 @@ const difficultyColors = {
 
 export function MethodsSearch({ categoryGroups, totalMethods }: MethodsSearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<'all' | Difficulty>('all');
+  const [selectedDuration, setSelectedDuration] = useState<'all' | 'short' | 'medium' | 'long' | 'unknown'>('all');
+
+  const categoryOptions = useMemo(
+    () => ['all', ...categoryGroups.map((category) => category.category)],
+    [categoryGroups]
+  );
+
+  const parseMaxMinutes = (durationRange: string | null): number | null => {
+    if (!durationRange) return null;
+    const matches = durationRange.match(/\d+/g);
+    if (!matches || matches.length === 0) return null;
+    const values = matches.map((v) => Number(v)).filter((v) => !Number.isNaN(v));
+    if (values.length === 0) return null;
+    return Math.max(...values);
+  };
 
   const filteredCategories = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return categoryGroups;
-    }
-
     const query = searchQuery.toLowerCase();
+    const hasQuery = Boolean(searchQuery.trim());
 
     return categoryGroups
+      .filter((category) => selectedCategory === 'all' || category.category === selectedCategory)
       .map(category => ({
         ...category,
         methods: category.methods.filter(method =>
-          method.name.toLowerCase().includes(query) ||
-          (method.description && method.description.toLowerCase().includes(query)) ||
-          (method.keywords && method.keywords.some(kw => kw.toLowerCase().includes(query)))
+          (!hasQuery ||
+            method.name.toLowerCase().includes(query) ||
+            (method.description && method.description.toLowerCase().includes(query)) ||
+            (method.keywords && method.keywords.some(kw => kw.toLowerCase().includes(query)))) &&
+          (selectedDifficulty === 'all' || method.difficulty === selectedDifficulty) &&
+          (() => {
+            if (selectedDuration === 'all') return true;
+            const maxMinutes = parseMaxMinutes(method.duration_range);
+            if (selectedDuration === 'unknown') return maxMinutes === null;
+            if (maxMinutes === null) return false;
+            if (selectedDuration === 'short') return maxMinutes <= 15;
+            if (selectedDuration === 'medium') return maxMinutes > 15 && maxMinutes <= 60;
+            return maxMinutes > 60;
+          })()
         ),
       }))
       .filter(category => category.methods.length > 0);
-  }, [searchQuery, categoryGroups]);
+  }, [searchQuery, selectedCategory, selectedDifficulty, selectedDuration, categoryGroups]);
 
   const filteredCount = filteredCategories.reduce((acc, cat) => acc + cat.methods.length, 0);
+  const hasActiveFilters =
+    Boolean(searchQuery.trim()) ||
+    selectedCategory !== 'all' ||
+    selectedDifficulty !== 'all' ||
+    selectedDuration !== 'all';
+
+  const clearAllFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('all');
+    setSelectedDifficulty('all');
+    setSelectedDuration('all');
+  };
 
   return (
     <>
       {/* Search */}
-      <div className="mb-8">
+      <div className="mb-8 space-y-4">
         <div className="relative max-w-md">
           <Icon
             icon="carbon:search"
@@ -79,9 +117,46 @@ export function MethodsSearch({ categoryGroups, totalMethods }: MethodsSearchPro
             className="pl-10"
           />
         </div>
-        {searchQuery && (
+        <div className="grid sm:grid-cols-3 gap-3 max-w-3xl">
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+          >
+            {categoryOptions.map((category) => (
+              <option key={category} value={category}>
+                {category === 'all' ? 'All categories' : category}
+              </option>
+            ))}
+          </select>
+          <select
+            value={selectedDifficulty}
+            onChange={(e) => setSelectedDifficulty(e.target.value as 'all' | Difficulty)}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+          >
+            <option value="all">All difficulty levels</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+          <select
+            value={selectedDuration}
+            onChange={(e) => setSelectedDuration(e.target.value as 'all' | 'short' | 'medium' | 'long' | 'unknown')}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+          >
+            <option value="all">All durations</option>
+            <option value="short">Short (up to 15 min)</option>
+            <option value="medium">Medium (16 to 60 min)</option>
+            <option value="long">Long (60+ min)</option>
+            <option value="unknown">Duration unknown</option>
+          </select>
+        </div>
+        {hasActiveFilters && (
           <p className="text-sm text-muted-foreground mt-2">
             Showing {filteredCount} of {totalMethods} methods
+            <button onClick={clearAllFilters} className="ml-3 text-primary hover:underline">
+              Clear all filters
+            </button>
           </p>
         )}
       </div>
@@ -130,7 +205,7 @@ export function MethodsSearch({ categoryGroups, totalMethods }: MethodsSearchPro
                           )}
                           {method.difficulty && (
                             <Badge className={`text-xs whitespace-nowrap ${difficultyColors[method.difficulty]}`}>
-                              {method.difficulty}
+                              {method.difficulty.charAt(0).toUpperCase() + method.difficulty.slice(1)}
                             </Badge>
                           )}
                         </div>
@@ -149,11 +224,8 @@ export function MethodsSearch({ categoryGroups, totalMethods }: MethodsSearchPro
           <p className="text-muted-foreground mb-4">
             Try a different search term or browse all methods
           </p>
-          <button
-            onClick={() => setSearchQuery('')}
-            className="text-primary hover:underline"
-          >
-            Clear search
+          <button onClick={clearAllFilters} className="text-primary hover:underline">
+            Clear filters
           </button>
         </div>
       )}

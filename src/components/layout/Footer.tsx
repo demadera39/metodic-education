@@ -45,6 +45,11 @@ export function Footer() {
                   Learning Frameworks
                 </Link>
               </li>
+              <li>
+                <Link href="/playbooks" className="hover:text-foreground transition-colors">
+                  Playbooks
+                </Link>
+              </li>
             </ul>
           </div>
 

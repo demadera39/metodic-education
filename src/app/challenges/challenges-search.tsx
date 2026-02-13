@@ -30,32 +30,53 @@ interface ChallengesSearchProps {
 
 export function ChallengesSearch({ categoryGroups, totalChallenges }: ChallengesSearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedSolutions, setSelectedSolutions] = useState<'all' | 'quick' | 'standard' | 'deep'>('all');
+
+  const categoryOptions = useMemo(
+    () => ['all', ...categoryGroups.map((category) => category.category)],
+    [categoryGroups]
+  );
 
   const filteredCategories = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return categoryGroups;
-    }
-
     const query = searchQuery.toLowerCase();
+    const hasQuery = Boolean(searchQuery.trim());
 
     return categoryGroups
+      .filter((category) => selectedCategory === 'all' || category.category === selectedCategory)
       .map(category => ({
         ...category,
         challenges: category.challenges.filter(challenge =>
-          challenge.title.toLowerCase().includes(query) ||
-          (challenge.description && challenge.description.toLowerCase().includes(query)) ||
-          (challenge.keywords && challenge.keywords.some(kw => kw.toLowerCase().includes(query)))
+          (!hasQuery ||
+            challenge.title.toLowerCase().includes(query) ||
+            (challenge.description && challenge.description.toLowerCase().includes(query)) ||
+            (challenge.keywords && challenge.keywords.some(kw => kw.toLowerCase().includes(query)))) &&
+          (() => {
+            if (selectedSolutions === 'all') return true;
+            const count = challenge.solution_count || 0;
+            if (selectedSolutions === 'quick') return count <= 3;
+            if (selectedSolutions === 'standard') return count >= 4 && count <= 5;
+            return count >= 6;
+          })()
         ),
       }))
       .filter(category => category.challenges.length > 0);
-  }, [searchQuery, categoryGroups]);
+  }, [searchQuery, selectedCategory, selectedSolutions, categoryGroups]);
 
   const filteredCount = filteredCategories.reduce((acc, cat) => acc + cat.challenges.length, 0);
+  const hasActiveFilters =
+    Boolean(searchQuery.trim()) || selectedCategory !== 'all' || selectedSolutions !== 'all';
+
+  const clearAllFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('all');
+    setSelectedSolutions('all');
+  };
 
   return (
     <>
       {/* Search */}
-      <div className="mb-8">
+      <div className="mb-8 space-y-4">
         <div className="relative max-w-md">
           <Icon
             icon="carbon:search"
@@ -69,9 +90,35 @@ export function ChallengesSearch({ categoryGroups, totalChallenges }: Challenges
             className="pl-10"
           />
         </div>
-        {searchQuery && (
+        <div className="grid sm:grid-cols-2 gap-3 max-w-2xl">
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+          >
+            {categoryOptions.map((category) => (
+              <option key={category} value={category}>
+                {category === 'all' ? 'All categories' : category}
+              </option>
+            ))}
+          </select>
+          <select
+            value={selectedSolutions}
+            onChange={(e) => setSelectedSolutions(e.target.value as 'all' | 'quick' | 'standard' | 'deep')}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+          >
+            <option value="all">Any number of solutions</option>
+            <option value="quick">Quick fixes (up to 3)</option>
+            <option value="standard">Standard (4 to 5)</option>
+            <option value="deep">Deep dive (6+)</option>
+          </select>
+        </div>
+        {hasActiveFilters && (
           <p className="text-sm text-muted-foreground mt-2">
             Showing {filteredCount} of {totalChallenges} challenges
+            <button onClick={clearAllFilters} className="ml-3 text-primary hover:underline">
+              Clear all filters
+            </button>
           </p>
         )}
       </div>
@@ -126,11 +173,8 @@ export function ChallengesSearch({ categoryGroups, totalChallenges }: Challenges
           <p className="text-muted-foreground mb-4">
             Try a different search term or browse all challenges
           </p>
-          <button
-            onClick={() => setSearchQuery('')}
-            className="text-primary hover:underline"
-          >
-            Clear search
+          <button onClick={clearAllFilters} className="text-primary hover:underline">
+            Clear filters
           </button>
         </div>
       )}

@@ -1,10 +1,8 @@
 import { Metadata } from 'next';
-import Link from 'next/link';
 import { Icon } from '@iconify/react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
 import { ChallengesSearch } from './challenges-search';
+import { EmailSignupCta } from '@/components/marketing/EmailSignupCta';
 
 export const metadata: Metadata = {
   title: 'Common Workshop & Meeting Challenges | METODIC learn',
@@ -118,6 +116,15 @@ export default async function ChallengesPage() {
             Describe Your Challenge
           </a>
         </section>
+
+        <section className="mt-8 max-w-3xl">
+          <EmailSignupCta
+            compact
+            source="challenges-empty"
+            title="Get challenge updates and news"
+            description="Get updates and news when we publish new challenge guides and scripts."
+          />
+        </section>
       </div>
     );
   }
@@ -160,6 +167,15 @@ export default async function ChallengesPage() {
           <Icon icon="carbon:chat-bot" className="h-5 w-5" />
           Describe Your Challenge
         </a>
+      </section>
+
+      <section className="mt-8 max-w-3xl">
+        <EmailSignupCta
+          compact
+          source="challenges-page"
+          title="Get updates and news for challenges"
+          description="Get updates and news about new challenge pages, practical scripts, and facilitator guidance."
+        />
       </section>
     </div>
   );

@@ -1,10 +1,8 @@
 import { Metadata } from 'next';
-import Link from 'next/link';
 import { Icon } from '@iconify/react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
 import { MethodsSearch } from './methods-search';
+import { EmailSignupCta } from '@/components/marketing/EmailSignupCta';
 
 export const metadata: Metadata = {
   title: 'Facilitation Methods | METODIC learn',
@@ -35,6 +33,75 @@ interface CategoryGroup {
   methods: Method[];
 }
 
+function normalizeCategory(rawCategory: string | null | undefined): string {
+  const raw = (rawCategory || '').toLowerCase();
+
+  if (raw.includes('decision')) return 'decision';
+  if (raw.includes('ideation') || raw.includes('innovation')) return 'ideation';
+  if (raw.includes('retrospective') || raw.includes('reflection')) return 'retrospective';
+  if (raw.includes('energizer') || raw.includes('icebreaker')) return 'energizer';
+  if (
+    raw.includes('problem solving') ||
+    raw.includes('problem-solving') ||
+    raw.includes('analysis') ||
+    raw.includes('systems thinking') ||
+    raw.includes('evaluation')
+  ) {
+    return 'problem-solving';
+  }
+  if (
+    raw.includes('alignment') ||
+    raw.includes('team building') ||
+    raw.includes('communication') ||
+    raw.includes('collaboration')
+  ) {
+    return 'alignment';
+  }
+
+  return 'engagement';
+}
+
+function parseMaxMinutes(durationRange: string | null | undefined): number | null {
+  if (!durationRange) return null;
+  const matches = durationRange.match(/\d+/g);
+  if (!matches || matches.length === 0) return null;
+  const values = matches.map((v) => Number(v)).filter((v) => !Number.isNaN(v));
+  if (values.length === 0) return null;
+  return Math.max(...values);
+}
+
+function inferDifficulty(
+  durationRange: string | null | undefined,
+  keywords: string[] = [],
+  name: string = ''
+): Difficulty {
+  const maxMinutes = parseMaxMinutes(durationRange);
+  const combined = `${name} ${keywords.join(' ')}`.toLowerCase();
+
+  if (
+    combined.includes('advanced') ||
+    combined.includes('expert') ||
+    combined.includes('complex') ||
+    combined.includes('deep democracy')
+  ) {
+    return 'hard';
+  }
+
+  if (
+    combined.includes('icebreaker') ||
+    combined.includes('energizer') ||
+    combined.includes('check-in') ||
+    combined.includes('dot voting')
+  ) {
+    return 'easy';
+  }
+
+  if (maxMinutes === null) return 'medium';
+  if (maxMinutes <= 15) return 'easy';
+  if (maxMinutes <= 60) return 'medium';
+  return 'hard';
+}
+
 const categoryConfig: Record<string, { icon: string; description: string }> = {
   engagement: { icon: 'carbon:user-speaker', description: 'Get everyone involved, not just the loud voices' },
   decision: { icon: 'carbon:decision-tree', description: 'Move from discussion to decision' },
@@ -54,7 +121,12 @@ async function getMethods(): Promise<Method[]> {
     .order('name');
 
   if (!educationError && educationMethods && educationMethods.length > 0) {
-    return educationMethods as Method[];
+    return educationMethods.map((m) => ({
+      ...m,
+      category: normalizeCategory(m.category),
+      difficulty: m.difficulty || inferDifficulty(m.duration_range, m.keywords || [], m.name),
+      keywords: Array.isArray(m.keywords) ? m.keywords : [],
+    })) as Method[];
   }
 
   // Fallback to curated_methods table (645+ methods)
@@ -74,10 +146,10 @@ async function getMethods(): Promise<Method[]> {
     id: m.id,
     slug: m.slug,
     name: m.name,
-    category: m.category || 'engagement',
+    category: normalizeCategory(m.category),
     description: m.description,
     duration_range: m.duration_label,
-    difficulty: 'medium' as Difficulty, // Default to medium
+    difficulty: inferDifficulty(m.duration_label, Array.isArray(m.tags) ? m.tags : [], m.name),
     keywords: Array.isArray(m.tags) ? m.tags : [],
   }));
 }
@@ -86,7 +158,7 @@ function groupByCategory(methods: Method[]): CategoryGroup[] {
   const groups: Record<string, Method[]> = {};
 
   methods.forEach(method => {
-    const category = method.category || 'other';
+    const category = normalizeCategory(method.category);
     if (!groups[category]) {
       groups[category] = [];
     }
@@ -148,6 +220,15 @@ export default async function MethodsPage() {
             Explore Full Library
           </a>
         </section>
+
+        <section className="mt-8 max-w-3xl">
+          <EmailSignupCta
+            compact
+            source="methods-empty"
+            title="Get method updates and news"
+            description="Get updates and news when new facilitation methods and step-by-step guides are added."
+          />
+        </section>
       </div>
     );
   }
@@ -189,6 +270,15 @@ export default async function MethodsPage() {
           <Icon icon="carbon:catalog" className="h-5 w-5" />
           Explore Full Library
         </a>
+      </section>
+
+      <section className="mt-8 max-w-3xl">
+        <EmailSignupCta
+          compact
+          source="methods-page"
+          title="Get updates and news for methods"
+          description="Get updates and news about new methods, variations, and practical facilitation tips."
+        />
       </section>
     </div>
   );

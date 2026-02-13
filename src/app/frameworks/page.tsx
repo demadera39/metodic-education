@@ -1,10 +1,9 @@
 import { Metadata } from 'next';
-import Link from 'next/link';
 import { Icon } from '@iconify/react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
 import { FrameworksSearch } from './frameworks-search';
+import { EmailSignupCta } from '@/components/marketing/EmailSignupCta';
 
 export const metadata: Metadata = {
   title: 'Session Frameworks - Proven Structures for Better Outcomes | METODIC learn',
@@ -241,6 +240,15 @@ export default async function FrameworksPage() {
           <Icon icon="carbon:rocket" className="h-5 w-5" />
           Build a Session with Metodic
         </a>
+      </section>
+
+      <section className="mt-8 max-w-3xl">
+        <EmailSignupCta
+          compact
+          source="frameworks-page"
+          title="Get framework updates and news"
+          description="Get updates and news about newly added session frameworks and application guides."
+        />
       </section>
     </div>
   );
