@@ -107,7 +107,7 @@ function parsePanicScript(script: string): ParsedScriptBlock[] {
     // Handle "Section Name: 1. ... 2. ..." including markdown variants like
     // "**After the meeting:** 1. ... 2. ..."
     const inlineSectionMatch = blockBody.match(
-      /^(?:\*\*)?\s*([^:\n*][^:\n]{1,100}?)(?::)?(?:\*\*)?\s*:\s*(\d+\..*)$/s
+      /^(?:\*\*)?\s*([^:\n*][^:\n]{1,100}?)(?::)?(?:\*\*)?\s*:\s*(\d+[\s\S]*)$/
     );
     const sectionHeading = forcedHeading || inlineSectionMatch?.[1]?.replace(/\*\*/g, '').trim();
     const listSource = inlineSectionMatch ? inlineSectionMatch[2] : blockBody;
