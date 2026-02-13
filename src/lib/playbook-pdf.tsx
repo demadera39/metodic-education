@@ -889,6 +889,6 @@ function PlaybookPdfDocument({ playbook }: { playbook: PlaybookPdfData }) {
   );
 }
 
-export async function renderPlaybookPdf(playbook: PlaybookPdfData) {
+export async function renderPlaybookPdf(playbook: PlaybookPdfData): Promise<NodeJS.ReadableStream> {
   return pdf(<PlaybookPdfDocument playbook={playbook} />).toBuffer();
 }

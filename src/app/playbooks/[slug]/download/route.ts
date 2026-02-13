@@ -43,9 +43,16 @@ export async function GET(
   const fileName = `${playbook.slug || 'playbook'}-extended.pdf`;
 
   try {
-    const buffer = await renderPlaybookPdf(playbook);
+    const stream = await renderPlaybookPdf(playbook);
 
-    return new NextResponse(buffer, {
+    // Collect the readable stream into a Buffer then wrap as Uint8Array
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of stream) {
+      chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+    }
+    const pdfBytes = Buffer.concat(chunks);
+
+    return new NextResponse(pdfBytes, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${fileName}"`,
