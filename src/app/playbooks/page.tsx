@@ -76,7 +76,14 @@ export default async function PlaybooksPage() {
       ) : (
         <PlaybooksSearch playbooks={playbooks.map((playbook) => ({
           ...playbook,
-          sequence: Array.isArray(playbook.sequence) ? playbook.sequence : [],
+          sequence: (Array.isArray(playbook.sequence) ? playbook.sequence : []) as {
+            phase?: string;
+            time_window?: string;
+            challenge_title?: string;
+            method_name?: string;
+            intervention?: string;
+            script_template?: string;
+          }[],
         }))} />
       )}
 
