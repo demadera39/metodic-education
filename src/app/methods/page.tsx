@@ -4,6 +4,8 @@ import { supabase } from '@/lib/supabase';
 import { MethodsSearch } from './methods-search';
 import { EmailSignupCta } from '@/components/marketing/EmailSignupCta';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Facilitation Methods | METODIC learn',
   description: 'Step-by-step instructions for running effective workshops and meetings. Each method includes timing, tips, and variations.',

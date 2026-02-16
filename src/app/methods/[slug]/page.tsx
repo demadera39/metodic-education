@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 interface Method {
   id: string;
   slug: string;

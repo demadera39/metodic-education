@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { EmailSignupCta } from '@/components/marketing/EmailSignupCta';
 
+export const dynamic = 'force-dynamic';
+
 // Category icons mapping
 const categoryIcons: Record<string, string> = {
   participation: 'carbon:user-speaker',

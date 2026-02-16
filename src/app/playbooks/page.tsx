@@ -6,6 +6,8 @@ import { supabase } from '@/lib/supabase';
 import { PlaybooksSearch } from './playbooks-search';
 import { EmailSignupCta } from '@/components/marketing/EmailSignupCta';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Playbooks | METODIC learn',
   description: 'Sequenced playbooks that combine challenges, interventions, and scripts for high-stakes meetings and sessions.',

@@ -4,6 +4,8 @@ import { supabase } from '@/lib/supabase';
 import { ChallengesSearch } from './challenges-search';
 import { EmailSignupCta } from '@/components/marketing/EmailSignupCta';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Common Workshop & Meeting Challenges | METODIC learn',
   description: 'Find practical solutions for the challenges you face in meetings, workshops, and team sessions. Each challenge includes copy-paste scripts for immediate use.',

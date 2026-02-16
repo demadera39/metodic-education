@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
 import { EmailSignupCta } from '@/components/marketing/EmailSignupCta';
 
+export const dynamic = 'force-dynamic';
+
 interface PlaybookStep {
   order: number;
   title: string;
