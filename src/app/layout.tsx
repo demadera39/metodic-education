@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://metodic.education"),
   title: {
     default: "METODIC | learn - Free Facilitation Knowledge",
     template: "%s | METODIC learn",
@@ -35,6 +36,9 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Metodic" }],
   creator: "Metodic",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -64,6 +68,20 @@ export const metadata: Metadata = {
   },
 };
 
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "METODIC learn",
+  url: "https://metodic.education",
+  description:
+    "Free facilitation knowledge for professionals. Learn methods, solve meeting problems, and run better sessions.",
+  publisher: {
+    "@type": "Organization",
+    name: "METODIC",
+    url: "https://metodic.io",
+  },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -71,6 +89,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >

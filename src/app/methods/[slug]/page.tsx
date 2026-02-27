@@ -198,6 +198,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${method.name} - Facilitation Method | METODIC learn`,
     description: method.description || `Learn how to use ${method.name} in your workshops and meetings.`,
+    alternates: { canonical: `/methods/${slug}` },
     openGraph: {
       title: `${method.name} - How to Facilitate | METODIC learn`,
       description: method.description || `Learn how to use ${method.name} in your workshops and meetings.`,
@@ -252,8 +253,34 @@ export default async function MethodPage({ params }: Props) {
       )
     : [];
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: `How to Facilitate ${method.name}`,
+    description: method.description || `Learn how to use ${method.name} in workshops and meetings.`,
+    url: `https://metodic.education/methods/${slug}`,
+    ...(method.duration_range && { totalTime: method.duration_range }),
+    step: steps.map((step, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      text: step,
+    })),
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://metodic.education" },
+      { "@type": "ListItem", position: 2, name: "Methods", item: "https://metodic.education/methods" },
+      { "@type": "ListItem", position: 3, name: method.name, item: `https://metodic.education/methods/${slug}` },
+    ],
+  };
+
   return (
     <div className="container py-12">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
         <Link href="/" className="hover:text-foreground transition-colors">

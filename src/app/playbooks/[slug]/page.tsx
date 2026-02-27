@@ -72,6 +72,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${playbook.title} | METODIC learn`,
     description: playbook.summary || playbook.organizational_challenge,
+    alternates: { canonical: `/playbooks/${slug}` },
     openGraph: {
       title: `${playbook.title} | METODIC learn`,
       description: playbook.summary || playbook.organizational_challenge,
@@ -87,8 +88,30 @@ export default async function PlaybookDetailPage({ params }: { params: Promise<{
     notFound();
   }
 
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: playbook.title,
+    description: playbook.summary || playbook.organizational_challenge,
+    url: `https://metodic.education/playbooks/${slug}`,
+    author: { "@type": "Organization", name: "METODIC" },
+    publisher: { "@type": "Organization", name: "METODIC", url: "https://metodic.io" },
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://metodic.education" },
+      { "@type": "ListItem", position: 2, name: "Playbooks", item: "https://metodic.education/playbooks" },
+      { "@type": "ListItem", position: 3, name: playbook.title, item: `https://metodic.education/playbooks/${slug}` },
+    ],
+  };
+
   return (
     <div className="container py-10">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <div className="mb-6">
         <Link href="/playbooks" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <Icon icon="carbon:arrow-left" className="h-4 w-4" />

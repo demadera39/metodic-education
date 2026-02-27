@@ -8,6 +8,7 @@ import { EmailSignupCta } from '@/components/marketing/EmailSignupCta';
 export const metadata: Metadata = {
   title: 'Session Frameworks - Proven Structures for Better Outcomes | METODIC learn',
   description: 'Battle-tested frameworks that help teams make decisions, solve problems, and align on goals. Each framework addresses specific meeting challenges with proven step-by-step structures.',
+  alternates: { canonical: '/frameworks' },
   openGraph: {
     title: 'Session Frameworks - Proven Structures for Better Outcomes | METODIC learn',
     description: 'Battle-tested frameworks that help teams make decisions, solve problems, and align on goals.',

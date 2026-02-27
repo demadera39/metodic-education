@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Playbooks | METODIC learn',
   description: 'Sequenced playbooks that combine challenges, interventions, and scripts for high-stakes meetings and sessions.',
+  alternates: { canonical: '/playbooks' },
   openGraph: {
     title: 'Playbooks | METODIC learn',
     description: 'Sequenced playbooks for recurring team and organizational challenges.',

@@ -231,6 +231,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${challenge.title} - How to Address It | METODIC learn`,
     description: challenge.description || `Learn how to address ${challenge.title} in your meetings and workshops.`,
+    alternates: { canonical: `/challenges/${slug}` },
     openGraph: {
       title: `${challenge.title} - How to Address It | METODIC learn`,
       description: challenge.description || `Learn how to address ${challenge.title} in your meetings and workshops.`,
@@ -297,8 +298,30 @@ export default async function ChallengePage({ params }: Props) {
       return acc;
     }, []);
 
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: `${challenge.title} - How to Address It`,
+    description: challenge.description || `Learn how to address ${challenge.title} in your meetings and workshops.`,
+    url: `https://metodic.education/challenges/${slug}`,
+    author: { "@type": "Organization", name: "METODIC" },
+    publisher: { "@type": "Organization", name: "METODIC", url: "https://metodic.io" },
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://metodic.education" },
+      { "@type": "ListItem", position: 2, name: "Challenges", item: "https://metodic.education/challenges" },
+      { "@type": "ListItem", position: 3, name: challenge.title, item: `https://metodic.education/challenges/${slug}` },
+    ],
+  };
+
   return (
     <div className="container py-12">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
         <Link href="/" className="hover:text-foreground transition-colors">

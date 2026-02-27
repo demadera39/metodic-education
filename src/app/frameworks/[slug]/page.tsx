@@ -269,6 +269,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${framework.name} - ${framework.category} Framework | METODIC learn`,
     description: framework.description || `Use the ${framework.name} framework: ${content.challenge.toLowerCase()}.`,
+    alternates: { canonical: `/frameworks/${slug}` },
     openGraph: {
       title: `${framework.name} - ${framework.category} Framework | METODIC learn`,
       description: framework.description || `Use the ${framework.name} framework: ${content.challenge.toLowerCase()}.`,
@@ -298,8 +299,34 @@ export default async function FrameworkPage({ params }: Props) {
   const relatedChallenges = await getRelatedChallenges(framework.category);
   const content = categoryContent[framework.category] || defaultCategoryContent;
 
+  const phases = Array.isArray(framework.phases)
+    ? framework.phases.map(normalizePhase)
+    : [];
+
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: `${framework.name} - ${framework.category} Framework`,
+    description: framework.description || `Use the ${framework.name} framework for better outcomes.`,
+    url: `https://metodic.education/frameworks/${slug}`,
+    author: { "@type": "Organization", name: "METODIC" },
+    publisher: { "@type": "Organization", name: "METODIC", url: "https://metodic.io" },
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://metodic.education" },
+      { "@type": "ListItem", position: 2, name: "Frameworks", item: "https://metodic.education/frameworks" },
+      { "@type": "ListItem", position: 3, name: framework.name, item: `https://metodic.education/frameworks/${slug}` },
+    ],
+  };
+
   return (
     <div className="container py-12">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
         <Link href="/" className="hover:text-foreground transition-colors">
