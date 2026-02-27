@@ -93,7 +93,7 @@ export default async function PlaybookDetailPage({ params }: { params: Promise<{
     "@type": "Article",
     headline: playbook.title,
     description: playbook.summary || playbook.organizational_challenge,
-    url: `https://metodic.education/playbooks/${slug}`,
+    url: `https://www.metodic.education/playbooks/${slug}`,
     author: { "@type": "Organization", name: "METODIC" },
     publisher: { "@type": "Organization", name: "METODIC", url: "https://metodic.io" },
   };
@@ -102,9 +102,9 @@ export default async function PlaybookDetailPage({ params }: { params: Promise<{
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: "https://metodic.education" },
-      { "@type": "ListItem", position: 2, name: "Playbooks", item: "https://metodic.education/playbooks" },
-      { "@type": "ListItem", position: 3, name: playbook.title, item: `https://metodic.education/playbooks/${slug}` },
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://www.metodic.education" },
+      { "@type": "ListItem", position: 2, name: "Playbooks", item: "https://www.metodic.education/playbooks" },
+      { "@type": "ListItem", position: 3, name: playbook.title, item: `https://www.metodic.education/playbooks/${slug}` },
     ],
   };
 

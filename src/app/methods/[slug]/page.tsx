@@ -258,7 +258,7 @@ export default async function MethodPage({ params }: Props) {
     "@type": "HowTo",
     name: `How to Facilitate ${method.name}`,
     description: method.description || `Learn how to use ${method.name} in workshops and meetings.`,
-    url: `https://metodic.education/methods/${slug}`,
+    url: `https://www.metodic.education/methods/${slug}`,
     ...(method.duration_range && { totalTime: method.duration_range }),
     step: steps.map((step, i) => ({
       "@type": "HowToStep",
@@ -271,9 +271,9 @@ export default async function MethodPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: "https://metodic.education" },
-      { "@type": "ListItem", position: 2, name: "Methods", item: "https://metodic.education/methods" },
-      { "@type": "ListItem", position: 3, name: method.name, item: `https://metodic.education/methods/${slug}` },
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://www.metodic.education" },
+      { "@type": "ListItem", position: 2, name: "Methods", item: "https://www.metodic.education/methods" },
+      { "@type": "ListItem", position: 3, name: method.name, item: `https://www.metodic.education/methods/${slug}` },
     ],
   };
 
@@ -506,7 +506,7 @@ export default async function MethodPage({ params }: Props) {
             <CardContent className="flex gap-2">
               <Button variant="outline" size="sm" asChild>
                 <a
-                  href={`https://twitter.com/intent/tweet?text=How to use ${encodeURIComponent(method.name)} for better meetings&url=${encodeURIComponent(`https://metodic.education/methods/${method.slug}`)}`}
+                  href={`https://twitter.com/intent/tweet?text=How to use ${encodeURIComponent(method.name)} for better meetings&url=${encodeURIComponent(`https://www.metodic.education/methods/${method.slug}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -515,7 +515,7 @@ export default async function MethodPage({ params }: Props) {
               </Button>
               <Button variant="outline" size="sm" asChild>
                 <a
-                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://metodic.education/methods/${method.slug}`)}`}
+                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://www.metodic.education/methods/${method.slug}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

@@ -48,6 +48,6 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
       },
     ],
-    sitemap: "https://metodic.education/sitemap.xml",
+    sitemap: "https://www.metodic.education/sitemap.xml",
   };
 }

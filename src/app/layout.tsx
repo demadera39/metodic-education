@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://metodic.education"),
+  metadataBase: new URL("https://www.metodic.education"),
   title: {
     default: "METODIC | learn - Free Facilitation Knowledge",
     template: "%s | METODIC learn",
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://metodic.education",
+    url: "https://www.metodic.education",
     siteName: "METODIC | learn",
     title: "METODIC | learn - Free Facilitation Knowledge",
     description:
@@ -72,7 +72,7 @@ const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: "METODIC learn",
-  url: "https://metodic.education",
+  url: "https://www.metodic.education",
   description:
     "Free facilitation knowledge for professionals. Learn methods, solve meeting problems, and run better sessions.",
   publisher: {

@@ -308,7 +308,7 @@ export default async function FrameworkPage({ params }: Props) {
     "@type": "Article",
     headline: `${framework.name} - ${framework.category} Framework`,
     description: framework.description || `Use the ${framework.name} framework for better outcomes.`,
-    url: `https://metodic.education/frameworks/${slug}`,
+    url: `https://www.metodic.education/frameworks/${slug}`,
     author: { "@type": "Organization", name: "METODIC" },
     publisher: { "@type": "Organization", name: "METODIC", url: "https://metodic.io" },
   };
@@ -317,9 +317,9 @@ export default async function FrameworkPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: "https://metodic.education" },
-      { "@type": "ListItem", position: 2, name: "Frameworks", item: "https://metodic.education/frameworks" },
-      { "@type": "ListItem", position: 3, name: framework.name, item: `https://metodic.education/frameworks/${slug}` },
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://www.metodic.education" },
+      { "@type": "ListItem", position: 2, name: "Frameworks", item: "https://www.metodic.education/frameworks" },
+      { "@type": "ListItem", position: 3, name: framework.name, item: `https://www.metodic.education/frameworks/${slug}` },
     ],
   };
 
@@ -696,7 +696,7 @@ export default async function FrameworkPage({ params }: Props) {
             <CardContent className="flex gap-2">
               <Button variant="outline" size="sm" asChild>
                 <a
-                  href={`https://twitter.com/intent/tweet?text=Check out the ${encodeURIComponent(framework.name)} framework for better meetings&url=${encodeURIComponent(`https://metodic.education/frameworks/${framework.slug}`)}`}
+                  href={`https://twitter.com/intent/tweet?text=Check out the ${encodeURIComponent(framework.name)} framework for better meetings&url=${encodeURIComponent(`https://www.metodic.education/frameworks/${framework.slug}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -705,7 +705,7 @@ export default async function FrameworkPage({ params }: Props) {
               </Button>
               <Button variant="outline" size="sm" asChild>
                 <a
-                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://metodic.education/frameworks/${framework.slug}`)}`}
+                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://www.metodic.education/frameworks/${framework.slug}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

@@ -303,7 +303,7 @@ export default async function ChallengePage({ params }: Props) {
     "@type": "Article",
     headline: `${challenge.title} - How to Address It`,
     description: challenge.description || `Learn how to address ${challenge.title} in your meetings and workshops.`,
-    url: `https://metodic.education/challenges/${slug}`,
+    url: `https://www.metodic.education/challenges/${slug}`,
     author: { "@type": "Organization", name: "METODIC" },
     publisher: { "@type": "Organization", name: "METODIC", url: "https://metodic.io" },
   };
@@ -312,9 +312,9 @@ export default async function ChallengePage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: "https://metodic.education" },
-      { "@type": "ListItem", position: 2, name: "Challenges", item: "https://metodic.education/challenges" },
-      { "@type": "ListItem", position: 3, name: challenge.title, item: `https://metodic.education/challenges/${slug}` },
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://www.metodic.education" },
+      { "@type": "ListItem", position: 2, name: "Challenges", item: "https://www.metodic.education/challenges" },
+      { "@type": "ListItem", position: 3, name: challenge.title, item: `https://www.metodic.education/challenges/${slug}` },
     ],
   };
 
@@ -562,7 +562,7 @@ export default async function ChallengePage({ params }: Props) {
             <CardContent className="flex gap-2">
               <Button variant="outline" size="sm" asChild>
                 <a
-                  href={`https://twitter.com/intent/tweet?text=How to address ${encodeURIComponent(challenge.title)} in your meetings&url=${encodeURIComponent(`https://metodic.education/challenges/${challenge.slug}`)}`}
+                  href={`https://twitter.com/intent/tweet?text=How to address ${encodeURIComponent(challenge.title)} in your meetings&url=${encodeURIComponent(`https://www.metodic.education/challenges/${challenge.slug}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -571,7 +571,7 @@ export default async function ChallengePage({ params }: Props) {
               </Button>
               <Button variant="outline" size="sm" asChild>
                 <a
-                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://metodic.education/challenges/${challenge.slug}`)}`}
+                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://www.metodic.education/challenges/${challenge.slug}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
