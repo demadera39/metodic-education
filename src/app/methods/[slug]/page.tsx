@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
 
-export const dynamic = 'force-dynamic';
+// ISR: revalidate every hour — cached for fast crawling, generateStaticParams pre-builds popular pages
+export const revalidate = 3600;
 
 interface Method {
   id: string;

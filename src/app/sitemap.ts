@@ -3,6 +3,9 @@ import { supabase } from "@/lib/supabase";
 
 const BASE_URL = "https://www.metodic.education";
 
+// Revalidate sitemap every hour (ISR)
+export const revalidate = 3600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [];
   const now = new Date();
@@ -39,7 +42,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const methodSlugs = new Set<string>();
 
   for (const m of educationMethods || []) {
-    if (!methodSlugs.has(m.slug)) {
+    if (m.slug && !methodSlugs.has(m.slug)) {
       methodSlugs.add(m.slug);
       entries.push({
         url: `${BASE_URL}/methods/${m.slug}`,
@@ -51,13 +54,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   for (const m of curatedMethods || []) {
-    if (!methodSlugs.has(m.slug)) {
+    if (m.slug && !methodSlugs.has(m.slug)) {
       methodSlugs.add(m.slug);
       entries.push({
         url: `${BASE_URL}/methods/${m.slug}`,
         lastModified: m.updated_at ? new Date(m.updated_at) : now,
         changeFrequency: "weekly",
-        priority: 0.8,
+        priority: 0.7, // Curated methods slightly lower than editorial
       });
     }
   }
@@ -92,10 +95,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
-  // Frameworks
+  // Frameworks (active only)
   const { data: frameworks } = await supabase
     .from("learning_frameworks")
-    .select("slug, updated_at");
+    .select("slug, updated_at")
+    .eq("is_active", true);
 
   for (const f of frameworks || []) {
     entries.push({

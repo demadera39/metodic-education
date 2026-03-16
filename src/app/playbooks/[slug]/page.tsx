@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
 import { EmailSignupCta } from '@/components/marketing/EmailSignupCta';
 
-export const dynamic = 'force-dynamic';
+// ISR: revalidate every hour — cached for fast crawling
+export const revalidate = 3600;
 
 interface PlaybookStep {
   order: number;

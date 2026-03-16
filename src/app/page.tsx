@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { EmailSignupCta } from '@/components/marketing/EmailSignupCta';
 
-export const dynamic = 'force-dynamic';
+// ISR: revalidate every hour — pages are cached and fast for crawlers
+export const revalidate = 3600;
 
 // Category icons mapping
 const categoryIcons: Record<string, string> = {
