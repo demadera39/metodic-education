@@ -466,7 +466,7 @@ export default async function MethodPage({ params }: Props) {
             <CardContent>
               <Button asChild variant="secondary" className="w-full">
                 <a
-                  href={`https://metodic.io?method=${method.slug}`}
+                  href={`https://metodic.io/session-studio?methodSlug=${method.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

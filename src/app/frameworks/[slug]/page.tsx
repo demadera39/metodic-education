@@ -598,7 +598,7 @@ export default async function FrameworkPage({ params }: Props) {
             <CardContent>
               <Button asChild variant="secondary" className="w-full" size="lg">
                 <a
-                  href={`https://metodic.io?framework=${framework.slug}`}
+                  href={`https://metodic.io/session-studio?framework=${framework.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
