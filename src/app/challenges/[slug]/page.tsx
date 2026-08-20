@@ -530,7 +530,7 @@ export default async function ChallengePage({ params }: Props) {
             <CardContent>
               <Button asChild variant="secondary" className="w-full">
                 <a
-                  href={`https://metodic.io/recipes?challenge=${challenge.slug}`}
+                  href={`https://www.metodic.io/session-studio?challenge=${challenge.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

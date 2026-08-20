@@ -269,7 +269,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${framework.name} - ${framework.category} Framework | METODIC learn`,
     description: framework.description || `Use the ${framework.name} framework: ${content.challenge.toLowerCase()}.`,
-    alternates: { canonical: `/frameworks/${slug}` },
+    // The framework library's canonical home is metodic.io — both sites
+    // render the same learning_frameworks rows, and cross-domain canonicals
+    // stop the two domains competing for the same queries.
+    alternates: { canonical: `https://www.metodic.io/learning-frameworks/${slug}` },
     openGraph: {
       title: `${framework.name} - ${framework.category} Framework | METODIC learn`,
       description: framework.description || `Use the ${framework.name} framework: ${content.challenge.toLowerCase()}.`,
